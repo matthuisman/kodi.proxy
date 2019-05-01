@@ -1,20 +1,6 @@
 #!/usr/bin/env python2
-import os, sys
-
-progam_dir = 'C:\Program Files\Kodi'
-dir_path = os.path.dirname(os.path.realpath(__file__))
-tmp_dir = os.path.realpath(os.path.join(dir_path, '.tmp/'))
-addon_dir = os.path.realpath(os.path.join(dir_path, '../../../../'))
-
-from build import build
-build(quiet=False)
-
-try:
-    import xbmc
-except:
-    activate_this_file = os.path.realpath(os.path.join(addon_dir, '.kodienv\\.env\\Scripts\\activate_this.py'))
-    execfile(activate_this_file, dict(__file__=activate_this_file))
-
+import os
+import sys
 import time
 import io
 import json
@@ -30,7 +16,10 @@ import polib
 
 import xbmc, xbmcaddon, xbmcgui, xbmcplugin, xbmcvfs
 
-QUIET = False
+dir_path   = os.path.dirname(os.path.realpath(__file__))
+tmp_dir    = os.path.realpath(os.path.join(dir_path, '.tmp/'))
+addon_dir  = os.path.realpath(os.path.join(dir_path, 'addons/'))
+repo_url   = 'http://k.mjh.nz/.repository/addons.xml'
 
 def get_argv(position, default=None):
     try:
@@ -42,8 +31,7 @@ def run():
     url    = get_argv(1, '')
     module = get_argv(2, 'default')
 
-    os.environ['QUIET']     = get_argv(3, '0')
-    os.environ['ADDON_DEV'] = get_argv(4, '1')
+    os.environ['ADDON_DEV'] = get_argv(3, '1')
 
     _run(url, module)
 
@@ -69,7 +57,7 @@ def _run(url='', module='default'):
     _ocwd = os.getcwd()
 
     sys.path.insert(0, addon_path)
-    os.chdir(progam_dir)
+    os.chdir(addon_path)
     
     print("Calling {} {} {}".format(addon_id, module, sys.argv))
 
@@ -395,11 +383,11 @@ def endOfDirectory(handle, succeeded=True, updateListing=False, cacheToDisc=True
         return
 
     print('Title: {category}\nContent: {content}'.format(**DATA))
-    if not int(os.environ.get('QUIET', 0)):
-        for item in DATA['items']:
-            print("\nLabel: {}\nUrl: {}\nItem: {}\nIs Folder: {}".format(item[1].getLabel(), 'test.py "{}"'.format(item[0]), item[1], item[2]))
 
-        print("")
+    for item in DATA['items']:
+        print("\nLabel: {}\nUrl: {}\nItem: {}\nIs Folder: {}".format(item[1].getLabel(), 'test.py "{}"'.format(item[0]), item[1], item[2]))
+
+    print("")
 
     DATA = _init_data()
 
