@@ -19,6 +19,8 @@ kodi_home  = os.path.dirname(os.path.realpath(__file__))
 repo_url   = 'http://k.mjh.nz/.repository/addons.xml'
 cmd        = os.path.basename(__file__)
 
+DEBUG = False
+
 def get_argv(position, default=None):
     try:
         return sys.argv[position]
@@ -29,7 +31,7 @@ def run():
     url    = get_argv(1, '')
     module = get_argv(2, 'default')
 
-    os.environ['ADDON_DEV'] = get_argv(3, '1')
+    os.environ['ADDON_DEV'] = get_argv(3, '0')
 
     _run(url, module)
 
@@ -59,7 +61,7 @@ def _run(url='', module='default'):
     sys.path.insert(0, addon_path)
     os.chdir(addon_path)
     
-    print("Calling {} {} {}".format(addon_id, module, sys.argv))
+    log("Calling {} {} {}".format(addon_id, module, sys.argv))
 
     f, filename, description = imp.find_module(addon_id, [addon_dir])
     package = imp.load_module(addon_id, f, filename, description)
@@ -72,14 +74,14 @@ def _run(url='', module='default'):
     finally:
         f.close()
 
-    print("**** time: {0:.3f} s *****\n".format(time.time() - start))
+    log("**** time: {0:.3f} s *****\n".format(time.time() - start))
     
     sys.path = _opath
     os.chdir(_ocwd)
 
 def _func_print(name, locals):
     locals.pop('self')
-    print("{}: {}".format(name, locals))
+    log("{}: {}".format(name, locals))
 
 ## xbmc ##
 
@@ -93,7 +95,8 @@ LOG_LABELS = {
 }
 
 def log(msg, level=xbmc.LOGDEBUG):
-    print('{} - {}'.format(LOG_LABELS[level], msg))
+    if DEBUG:
+        print('{} - {}'.format(LOG_LABELS[level], msg))
 
 def getInfoLabel(cline):
     return {
@@ -101,7 +104,7 @@ def getInfoLabel(cline):
     }.get(cline, "")
 
 def executebuiltin(function, wait=False):
-    print("XBMC Builtin: {}".format(function))
+    log("XBMC Builtin: {}".format(function))
     if function.startswith('XBMC.RunPlugin'):
         _run(function.replace('XBMC.RunPlugin(', '').rstrip('")'))
 
@@ -119,7 +122,7 @@ def translatePath(path):
     return path
 
 def getCondVisibility(condition):
-    print("Get visibility condition: {}".format(condition))
+    log("Get visibility condition: {}".format(condition))
     return False
 
 def getLanguage(format):
@@ -129,7 +132,7 @@ def Player_play(self, item="", listitem=None, windowed=False, startpos=-1):
     _func_print('Play', locals())
 
 def Montor_waitForAbort(self, timeout=0):
-    print("Wait for Abort: {}".format(timeout))
+    log("Wait for Abort: {}".format(timeout))
     time.sleep(1)
     return False
 
@@ -171,7 +174,7 @@ def Addon_init(self, addon_id=None):
     settings_json_path = os.path.join(self._info['profile'], 'settings.json')
 
     if not os.path.exists(addon_xml_path):
-        print("WARNING: Missing {}".format(addon_xml_path))
+        log("WARNING: Missing {}".format(addon_xml_path))
     else:
         tree = ET.parse(addon_xml_path)
         root = tree.getroot()
@@ -179,7 +182,7 @@ def Addon_init(self, addon_id=None):
             self._info[key] = root.attrib[key]
 
     if not os.path.exists(settings_path):
-        print("WARNING: Missing {}".format(settings_path))
+        log("WARNING: Missing {}".format(settings_path))
     else:
         tree = ET.parse(settings_path)
         for elem in tree.findall('*/setting'):
@@ -187,14 +190,14 @@ def Addon_init(self, addon_id=None):
                 self._settings[elem.attrib['id']] = elem.attrib.get('default')
     
     if not os.path.exists(po_path):
-        print("WARNING: Missing {}".format(po_path))
+        log("WARNING: Missing {}".format(po_path))
     else:
         try:
             po = polib.pofile(po_path)
             for entry in po:
                 self._strings[int(entry.msgctxt.lstrip('#'))] = entry.msgid
         except:
-            print("WARNING: Failed to parse PO File: {}".format(po_path))
+            log("WARNING: Failed to parse PO File: {}".format(po_path))
 
     if os.path.exists(settings_json_path):
         with io.open(settings_json_path, 'r', encoding='utf-8') as f:
@@ -209,7 +212,7 @@ def Addon_getLocalizedString(self, id):
     return self._strings.get(id, '')
 
 def Addon_openSettings(self):
-    print("OPEN SETTINGS!")
+    log("OPEN SETTINGS!")
 
 def Addon_getSetting(self, id):
     return str(self._settings.get(id, ""))
@@ -249,14 +252,14 @@ def Dialog_notification(self, heading, message, icon="", time=0, sound=True):
 
 def Dialog_select(self, heading, list, autoclose=0, preselect=-1, useDetails=False):
     for idx, item in enumerate(list):
-        print('{}: {}'.format(idx, item.encode('utf-8')))
+        log('{}: {}'.format(idx, item.encode('utf-8')))
     return int(raw_input('{}: '.format(heading)))
 
 def Dialog_input(self, heading, defaultt="", type=0, option=0, autoclose=0):
     return raw_input('{0} ({1}): '.format(heading, defaultt)).strip() or defaultt
 
 def DialogProgress_create(self, heading, line1="", line2="", line3=""):
-    print('Progress: {} {} {} {}'.format(heading, line1, line2, line3))
+    log('Progress: {} {} {} {}'.format(heading, line1, line2, line3))
 
 def Dialog_browseSingle(self, type, heading, shares, mask='', useThumbs=False, treatAsFolder=False, defaultt=''):
     return raw_input('{0} ({1}): '.format(heading, defaultt)).strip() or defaultt
@@ -386,7 +389,7 @@ def endOfDirectory(handle, succeeded=True, updateListing=False, cacheToDisc=True
     DATA = _init_data()
 
 def setResolvedUrl(handle, succeeded, listitem):
-    print("Resolved: {0}".format(listitem))
+    log("Resolved: {0}".format(listitem))
 
 def addSortMethod(handle, sortMethod, label2Mask=""):
     global DATA
