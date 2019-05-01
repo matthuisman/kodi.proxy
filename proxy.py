@@ -152,20 +152,24 @@ def Addon_init(self, addon_id=None):
     if not addon_id:
         addon_id = urlparse.urlsplit(sys.argv[0]).netloc
     
-    profile = translatePath('special://home/userdata/addon_data/'+addon_id)
-    path    = os.path.join(addon_dir, addon_id)
-
     self._info = {
-        'id': id,
-        'path': path,
-        'name': id,
-        'profile': profile,
+        'id': addon_id,
+        'name': addon_id,
+        'path': translatePath('special://home/addons/'+addon_id),
+        'profile': translatePath('special://home/userdata/addon_data/'+addon_id),
         'version': 'X',
         'fanart': 'fanart.jpg',
         'icon': 'icon.png',
     }
 
-    addon_xml_path = os.path.join(path, 'addon.xml')
+    self._settings = {}
+    self._strings  = {}
+
+    addon_xml_path     = os.path.join(self._info['path'], 'addon.xml')
+    settings_path      = os.path.join(self._info['path'], 'resources', 'settings.xml')
+    po_path            = os.path.join(self._info['path'], 'resources', 'language', 'resource.language.en_gb', 'strings.po')
+    settings_json_path = os.path.join(self._info['profile'], 'settings.json')
+
     if not os.path.exists(addon_xml_path):
         print("WARNING: Missing {}".format(addon_xml_path))
     else:
@@ -174,8 +178,6 @@ def Addon_init(self, addon_id=None):
         for key in root.attrib:
             self._info[key] = root.attrib[key]
 
-    self._settings = {}
-    settings_path = os.path.join(path, 'resources', 'settings.xml')
     if not os.path.exists(settings_path):
         print("WARNING: Missing {}".format(settings_path))
     else:
@@ -183,10 +185,7 @@ def Addon_init(self, addon_id=None):
         for elem in tree.findall('*/setting'):
             if 'id' in elem.attrib:
                 self._settings[elem.attrib['id']] = elem.attrib.get('default')
-
-    self._strings  = {}
     
-    po_path = os.path.join(path, 'resources', 'language', 'resource.language.en_gb', 'strings.po')
     if not os.path.exists(po_path):
         print("WARNING: Missing {}".format(po_path))
     else:
@@ -197,15 +196,14 @@ def Addon_init(self, addon_id=None):
         except:
             print("WARNING: Failed to parse PO File: {}".format(po_path))
 
-    settings_json_path = os.path.join(self._info['profile'], 'settings.json')
     if os.path.exists(settings_json_path):
-        with io.open(os.path.join(self._info['profile'], 'settings.json'), 'r', encoding='utf-8') as f:
+        with io.open(settings_json_path, 'r', encoding='utf-8') as f:
             self._settings.update(json.loads(f.read()))
 
-    if addon_id == 'inputstream.adaptive':
-        self._settings.update({
-            'DECRYPTERPATH': self._info['profile'],
-        })
+    # if addon_id == 'inputstream.adaptive':
+    #     self._settings.update({
+    #         'DECRYPTERPATH': self._info['profile'],
+    #     })
 
 def Addon_getLocalizedString(self, id):
     return self._strings.get(id, '')
