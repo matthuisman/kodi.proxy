@@ -384,7 +384,10 @@ def endOfDirectory(handle, succeeded=True, updateListing=False, cacheToDisc=True
         print('Title: {category}\nContent: {content}'.format(**DATA))
 
     for idx, item in enumerate(DATA['items']):
-        print("{}: {}".format(idx, item[1].getLabel()))
+        label = item[1].getLabel()
+        ## Need remove formatting
+
+        print("{}: {}".format(idx, label))
 
     index = int(raw_input('Select: '))
     selected = DATA['items'][index]
