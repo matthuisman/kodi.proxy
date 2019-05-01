@@ -17,6 +17,7 @@ import xbmc, xbmcaddon, xbmcgui, xbmcplugin, xbmcvfs
 
 kodi_home  = os.path.dirname(os.path.realpath(__file__))
 repo_url   = 'http://k.mjh.nz/.repository/addons.xml'
+cmd        = os.path.basename(__file__)
 
 def get_argv(position, default=None):
     try:
@@ -378,7 +379,7 @@ def endOfDirectory(handle, succeeded=True, updateListing=False, cacheToDisc=True
     print('Title: {category}\nContent: {content}'.format(**DATA))
 
     for item in DATA['items']:
-        print("\nLabel: {}\nUrl: {}\nItem: {}\nIs Folder: {}".format(item[1].getLabel(), 'test.py "{}"'.format(item[0]), item[1], item[2]))
+        print("\nLabel: {}\nUrl: {}\nItem: {}\nIs Folder: {}".format(item[1].getLabel(), '{} "{}"'.format(cmd, item[0]), item[1], item[2]))
 
     print("")
 
