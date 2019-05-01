@@ -6,7 +6,7 @@ certifi==2018.4.16
 chardet==3.0.4
 idna==2.7
 Kodistubs==17.6.5
-polib==1.1.0
+polib
 python-dateutil==2.8.0
 requests==2.19.1
 six==1.12.0

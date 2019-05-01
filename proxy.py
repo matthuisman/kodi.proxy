@@ -1,4 +1,3 @@
-#!/usr/bin/env python2
 import os
 import sys
 import time
@@ -38,7 +37,7 @@ def _run(url='', module='default'):
     addon_id   = split.netloc or os.path.basename(os.getcwd())
 
     addon_dir  = translatePath('special://home/addons')
-    addon_path = os.path.join(addon_path, addon_id)
+    addon_path = os.path.join(addon_dir, addon_id)
     fragment   = urllib.quote(split.fragment, ':&=') if split.fragment else ''
     query      = urllib.quote(split.query, ':&=') if split.query else ''
 

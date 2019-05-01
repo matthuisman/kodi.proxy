@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<addon id="plugin.video.kayo.sports" name="Kayo Sports" provider-name="MattHuisman.nz" version="0.2.7">
+  <requires>
+    <import addon="xbmc.python" version="2.1.0"/>
+    <import addon="script.module.requests"/>
+    <import addon="script.module.arrow"/>
+  </requires>
+  <extension point="xbmc.python.pluginsource" library="default.py" provides="video">
+    <provides>video</provides>
+  </extension>
+  <extension point="xbmc.service" library="service.py" start="login" />
+  <extension point="xbmc.addon.metadata">
+    <description lang="en">Watch your favourite sports live &amp; on demand with Kayo Sports.
+    Subscription required.</description>
+    <reuselanguageinvoker>true</reuselanguageinvoker>
+    <license></license>
+    <language></language>
+    <website>https://www.matthuisman.nz/2019/03/kayo-sports-kodi-add-on.html</website>
+    <news>Show seasons support</news>
+  </extension>
+</addon>
