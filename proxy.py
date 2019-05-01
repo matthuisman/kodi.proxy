@@ -16,9 +16,7 @@ import polib
 
 import xbmc, xbmcaddon, xbmcgui, xbmcplugin, xbmcvfs
 
-dir_path   = os.path.dirname(os.path.realpath(__file__))
-tmp_dir    = os.path.realpath(os.path.join(dir_path, '.tmp/'))
-addon_dir  = os.path.realpath(os.path.join(dir_path, 'addons/'))
+kodi_home  = os.path.dirname(os.path.realpath(__file__))
 repo_url   = 'http://k.mjh.nz/.repository/addons.xml'
 
 def get_argv(position, default=None):
@@ -37,8 +35,10 @@ def run():
 
 def _run(url='', module='default'):
     split      = urlparse.urlsplit(url)
-    addon_id   = split.netloc or os.path.basename(os.path.realpath(os.path.join(dir_path, '../../../')))
-    addon_path = os.path.join(addon_dir, addon_id)
+    addon_id   = split.netloc or os.path.basename(os.getcwd())
+
+    addon_dir  = translatePath('special://home/addons')
+    addon_path = os.path.join(addon_path, addon_id)
     fragment   = urllib.quote(split.fragment, ':&=') if split.fragment else ''
     query      = urllib.quote(split.query, ':&=') if split.query else ''
 
@@ -107,8 +107,8 @@ def executebuiltin(function, wait=False):
 
 def translatePath(path):
     translates = {
-        'special://temp/': _tmp_dir(),
-        'special://home/': os.path.join(addon_dir, '../'),
+        'special://home/': kodi_home,
+        'special://temp/': os.path.join(kodi_home, 'temp'),
     }
 
     for translate in translates:
@@ -148,15 +148,11 @@ xbmc.getLanguage            = getLanguage
 
 ## xbmcaddon ##
 
-def _tmp_dir():
-    addon_id = urlparse.urlsplit(sys.argv[0]).netloc
-    return os.path.join(addon_dir, addon_id, 'resources', 'lib', 'kodi.common', '.tmp')
-
 def Addon_init(self, addon_id=None):
     if not addon_id:
         addon_id = urlparse.urlsplit(sys.argv[0]).netloc
     
-    profile = _tmp_dir()
+    profile = translatePath('special://home/userdata/addon_data/'+addon_id)
     path    = os.path.join(addon_dir, addon_id)
 
     self._info = {
@@ -308,7 +304,7 @@ def ListItem_repr(self):
 
 def Window_init(self, existingWindowId=-1):
     self._window_id   = existingWindowId
-    self._window_path = os.path.join(_tmp_dir(), 'window-{}.json'.format(self._window_id))
+    self._window_path = os.path.join(translatePath('special://temp'), 'window-{}.json'.format(self._window_id))
 
     try:
         with open(self._window_path) as f:
