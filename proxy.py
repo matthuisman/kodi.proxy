@@ -160,7 +160,7 @@ def Addon_init(self, addon_id=None):
         'name': addon_id,
         'path': translatePath('special://home/addons/'+addon_id),
         'profile': translatePath('special://home/userdata/addon_data/'+addon_id),
-        'version': 'X',
+        'version': '2.0.0',
         'fanart': 'fanart.jpg',
         'icon': 'icon.png',
     }
@@ -252,14 +252,15 @@ def Dialog_notification(self, heading, message, icon="", time=0, sound=True):
 
 def Dialog_select(self, heading, list, autoclose=0, preselect=-1, useDetails=False):
     for idx, item in enumerate(list):
-        log('{}: {}'.format(idx, item.encode('utf-8')))
+        print('{}: {}'.format(idx, item.encode('utf-8')))
+
     return int(raw_input('{}: '.format(heading)))
 
 def Dialog_input(self, heading, defaultt="", type=0, option=0, autoclose=0):
     return raw_input('{0} ({1}): '.format(heading, defaultt)).strip() or defaultt
 
 def DialogProgress_create(self, heading, line1="", line2="", line3=""):
-    log('Progress: {} {} {} {}'.format(heading, line1, line2, line3))
+    print('Progress: {} {} {} {}'.format(heading, line1, line2, line3))
 
 def Dialog_browseSingle(self, type, heading, shares, mask='', useThumbs=False, treatAsFolder=False, defaultt=''):
     return raw_input('{0} ({1}): '.format(heading, defaultt)).strip() or defaultt
@@ -379,17 +380,21 @@ def endOfDirectory(handle, succeeded=True, updateListing=False, cacheToDisc=True
     if not succeeded:
         return
 
-    print('Title: {category}\nContent: {content}'.format(**DATA))
+    if DEBUG:
+        print('Title: {category}\nContent: {content}'.format(**DATA))
 
-    for item in DATA['items']:
-        print("\nLabel: {}\nUrl: {}\nItem: {}\nIs Folder: {}".format(item[1].getLabel(), '{} "{}"'.format(cmd, item[0]), item[1], item[2]))
+    for idx, item in enumerate(DATA['items']):
+        print("{}: {}".format(idx, item[1].getLabel()))
 
-    print("")
-
+    index = int(raw_input('Select: '))
+    selected = DATA['items'][index]
+    url = selected[0]
     DATA = _init_data()
+    _run(url)
 
 def setResolvedUrl(handle, succeeded, listitem):
     log("Resolved: {0}".format(listitem))
+    print(listitem.getPath())
 
 def addSortMethod(handle, sortMethod, label2Mask=""):
     global DATA
