@@ -1,6 +1,0 @@
-{
-    "playlist": {
-        "url": "plugin://$ID/?_=playlist&output=$FILE",
-        "timeout": 10
-    }
-}

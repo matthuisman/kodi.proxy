@@ -9,7 +9,7 @@ temp_dir   = os.path.join(kodi_home, 'temp')
 
 DEBUG      = False
 cmd        = os.path.basename(__file__)
-repo_url   = 'http://k.mjh.nz/.repository/addons.xml'
+repo_url   = 'http://k.mjh.nz/.repository/{}'
 
 try:
     import xbmc
@@ -29,12 +29,17 @@ import traceback
 from collections import defaultdict
 import xml.etree.ElementTree as ET
 import urlparse
-import urllib
 import imp
+import urllib
 import re
+import requests
+import zipfile
 
 import polib
 import xbmc, xbmcaddon, xbmcgui, xbmcplugin, xbmcvfs
+
+class ProxyException(Exception):
+    pass
 
 def get_argv(position, default=None):
     try:
@@ -42,24 +47,65 @@ def get_argv(position, default=None):
     except IndexError:
         return default
 
-def menu():
-    url    = get_argv(1, '')
-    module = get_argv(2, 'default')
+def menu(url='', module='default'):
+    cmds = ['install', 'update', 'plugin']
+    installed_addons = [f for f in os.listdir(addon_dir) if os.path.isdir(os.path.join(addon_dir, f))]
+    split     = urlparse.urlsplit(url)
+    addon_id  = split.netloc.lower()
+    cmd       = split.scheme.lower()
 
-    os.environ['ADDON_DEV'] = get_argv(3, '0')
+    if cmd not in cmds:
+        for idx, option in enumerate(cmds):
+            print('{}: {}'.format(idx, option))
+        
+        cmd = cmds[int(raw_input('Select: '))]
 
-    if not url:
-        addons = [f for f in os.listdir(addon_dir) if os.path.isdir(os.path.join(addon_dir, f))]
+    if cmd == 'install':
+        if not addon_id:
+            #to do: grab list of add-ons and allow select
+            raise ProxyException('Addon id required')
 
-        for idx, addon in enumerate(addons):
-            print('{}: {}'.format(idx, addon))
+        if addon_id in installed_addons:
+            raise ProxyException('{} already installed'.format(addon_id))
 
-        selected = addons[int(raw_input('Select: '))]
-        url = 'plugin://{}/'.format(selected)
+        url = repo_url.format('/{addon_id}/{addon_id}-latest.zip'.format(addon_id=addon_id))
+        local_filename = os.path.join(addon_dir, addon_id+'.zip')
 
-    _run(url, module)
+        if os.path.exists(local_filename):
+            os.remove(local_filename)
 
-def _run(url=sys.argv[0], module='default'):
+        r = requests.get(url, stream=True)
+        with open(local_filename, 'wb') as f:
+            shutil.copyfileobj(r.raw, f)
+
+        zip = zipfile.ZipFile(local_filename)
+        zip.extractall(path=addon_dir)
+        zip.close()
+
+        os.remove(local_filename)
+
+        print('{} Installed'.format(addon_id))
+
+    elif cmd == 'update':
+        if not addon_id:
+            to_update = installed_addons
+        else:
+            to_update = [addon_id]
+
+        print('Update: {}'.format(to_update))
+
+    elif cmd == 'plugin':
+        if not addon_id:
+            for idx, addon in enumerate(installed_addons):
+                print('{}: {}'.format(idx, addon))
+
+            selected = installed_addons[int(raw_input('Select: '))]
+            url = 'plugin://{}/'.format(selected)
+
+        _run(url, module)
+
+def _run(url=None, module='default'):
+    url        = url or get_argv(0, '')
     split      = urlparse.urlsplit(url)
     addon_id   = split.netloc or os.path.basename(os.getcwd())
 
@@ -470,4 +516,7 @@ xbmcvfs.mkdir  = mkdir
 xbmcvfs.mkdirs = mkdirs
 xbmcvfs.delete = delete
 
-menu()
+try:
+    menu(get_argv(1, ''), get_argv(2, 'default'))
+except ProxyException as e:
+    print(str(e))
