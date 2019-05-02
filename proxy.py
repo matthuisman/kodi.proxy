@@ -91,7 +91,7 @@ def install(addon_id):
         os.remove(local_filename)
 
 def menu(url='', module='default'):
-    cmds = ['install', 'update', 'plugin']
+    cmds = ['install', 'uninstall', 'update', 'plugin']
     installed_addons = [f for f in os.listdir(addon_dir) if os.path.isdir(os.path.join(addon_dir, f))]
     split     = urlparse.urlsplit(url)
     addon_id  = split.netloc.lower()
@@ -121,8 +121,26 @@ def menu(url='', module='default'):
 
         install(addon_id)
 
+    elif cmd == 'uninstall':
+        if not addon_id:
+            for idx, addon in enumerate(installed_addons):
+                print('{}: {}'.format(idx, addon))
+
+            addon_id = installed_addons[int(raw_input('Select: '))]
+
+        if addon_id not in installed_addons:
+            raise ProxyException('{} is not installed.'.format(addon_id))
+
+        print("Uninstall {}".format(addon_id))
+
     elif cmd == 'update':
         if not addon_id:
+            for idx, addon in enumerate(installed_addons):
+                print('{}: {}'.format(idx, addon))
+
+            addon_id = installed_addons[int(raw_input('Select: '))]
+
+        if addon_id == 'all':
             to_update = installed_addons
         else:
             to_update = [addon_id]
