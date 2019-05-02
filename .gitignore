@@ -2,6 +2,6 @@ __pycache__/
 *.pyc
 *.pyo
 .env
-userdata/*
+addon_data/*
 addons/*
 temp/*

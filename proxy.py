@@ -1,16 +1,24 @@
 #!/usr/bin/env python2
 import os
 
-DEBUG      = False
 kodi_home  = os.path.dirname(os.path.realpath(__file__))
-repo_url   = 'http://k.mjh.nz/.repository/addons.xml'
+venv_dir   = os.path.join(kodi_home, '.env')
+addon_dir  = os.path.join(kodi_home, 'addons')
+addon_data = os.path.join(kodi_home, 'addon_data')
+temp_dir   = os.path.join(kodi_home, 'temp')
+
+DEBUG      = False
 cmd        = os.path.basename(__file__)
+repo_url   = 'http://k.mjh.nz/.repository/addons.xml'
 
 try:
     import xbmc
-except:
-    activate_this_file = os.path.realpath(os.path.join(kodi_home, '.env\\Scripts\\activate_this.py'))
-    execfile(activate_this_file, dict(__file__=activate_this_file))
+except ImportError:
+    if venv_dir:
+        activate_this_file = os.path.join(venv_dir, 'Scripts/activate_this.py')
+        execfile(activate_this_file, dict(__file__=activate_this_file))
+    else:
+        raise Exception('Unable to import xbmc (kodi) python library')
 
 import sys
 import time
@@ -50,7 +58,6 @@ def _run(url='', module='default'):
     split      = urlparse.urlsplit(url)
     addon_id   = split.netloc or os.path.basename(os.getcwd())
 
-    addon_dir  = translatePath('special://home/addons')
     addon_path = os.path.join(addon_dir, addon_id)
     fragment   = urllib.quote(split.fragment, ':&=') if split.fragment else ''
     query      = urllib.quote(split.query, ':&=') if split.query else ''
@@ -127,7 +134,7 @@ def executebuiltin(function, wait=False):
 def translatePath(path):
     translates = {
         'special://home/': kodi_home,
-        'special://temp/': os.path.join(kodi_home, 'temp'),
+        'special://temp/': temp_dir,
     }
 
     for translate in translates:
@@ -174,8 +181,8 @@ def Addon_init(self, addon_id=None):
     self._info = {
         'id': addon_id,
         'name': addon_id,
-        'path': translatePath('special://home/addons/'+addon_id),
-        'profile': translatePath('special://home/userdata/addon_data/'+addon_id),
+        'path': os.path.join(addon_dir, addon_id),
+        'profile': os.path.join(addon_data, addon_id),
         'version': '2.0.0',
         'fanart': 'fanart.jpg',
         'icon': 'icon.png',
@@ -323,7 +330,7 @@ def ListItem_repr(self):
 
 def Window_init(self, existingWindowId=-1):
     self._window_id   = existingWindowId
-    self._window_path = os.path.join(translatePath('special://temp'), 'window-{}.json'.format(self._window_id))
+    self._window_path = os.path.join(temp_dir, 'window-{}.json'.format(self._window_id))
 
     try:
         with open(self._window_path) as f:
