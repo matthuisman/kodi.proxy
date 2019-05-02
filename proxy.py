@@ -59,10 +59,7 @@ def run():
 
     _run(url, module)
 
-def _run(url='', module='default'):
-    if url == None:
-        url = sys.argv[0]
-
+def _run(url=sys.argv[0], module='default'):
     split      = urlparse.urlsplit(url)
     addon_id   = split.netloc or os.path.basename(os.getcwd())
 
