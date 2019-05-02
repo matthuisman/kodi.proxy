@@ -127,8 +127,10 @@ def menu(url='', module='default'):
         else:
             to_update = [addon_id]
 
-        addons = get_addons()
+        if not to_update:
+            raise ProxyException('No addons to update')
 
+        addons = get_addons()
         for addon in to_update:
             addon_xml_path = os.path.join(addon_dir, addon, 'addon.xml')
             tree = ET.parse(addon_xml_path)
