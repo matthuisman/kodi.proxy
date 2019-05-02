@@ -42,7 +42,7 @@ def get_argv(position, default=None):
     except IndexError:
         return default
 
-def run():
+def menu():
     url    = get_argv(1, '')
     module = get_argv(2, 'default')
 
@@ -468,4 +468,4 @@ xbmcvfs.mkdir  = mkdir
 xbmcvfs.mkdirs = mkdirs
 xbmcvfs.delete = delete
 
-run()
+menu()
