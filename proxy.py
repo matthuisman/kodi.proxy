@@ -1,4 +1,17 @@
+#!/usr/bin/env python2
 import os
+
+DEBUG      = False
+kodi_home  = os.path.dirname(os.path.realpath(__file__))
+repo_url   = 'http://k.mjh.nz/.repository/addons.xml'
+cmd        = os.path.basename(__file__)
+
+try:
+    import xbmc
+except:
+    activate_this_file = os.path.realpath(os.path.join(kodi_home, '.env\\Scripts\\activate_this.py'))
+    execfile(activate_this_file, dict(__file__=activate_this_file))
+
 import sys
 import time
 import io
@@ -13,14 +26,7 @@ import imp
 import re
 
 import polib
-
 import xbmc, xbmcaddon, xbmcgui, xbmcplugin, xbmcvfs
-
-kodi_home  = os.path.dirname(os.path.realpath(__file__))
-repo_url   = 'http://k.mjh.nz/.repository/addons.xml'
-cmd        = os.path.basename(__file__)
-
-DEBUG = False
 
 def get_argv(position, default=None):
     try:
