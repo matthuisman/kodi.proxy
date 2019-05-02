@@ -47,6 +47,49 @@ def get_argv(position, default=None):
     except IndexError:
         return default
 
+def get_addons():
+    addons = {}
+    url = repo_url.format('addons.xml')
+    r = requests.get(url)
+
+    tree = ET.fromstring(r.content)
+    for elem in tree.findall('addon'):
+        addons[elem.attrib['id']] = elem.attrib['version']
+
+    return addons
+
+def install(addon_id):
+    addon_path = os.path.join(addon_dir, addon_id)
+    url = repo_url.format('/{addon_id}/{addon_id}-latest.zip'.format(addon_id=addon_id))
+    local_filename = os.path.join(addon_dir, addon_id+'.zip')
+
+    if os.path.exists(local_filename):
+        os.remove(local_filename)
+
+    r = requests.get(url, stream=True)
+    with open(local_filename, 'wb') as f:
+        shutil.copyfileobj(r.raw, f)
+
+    if os.path.exists(addon_path):
+        shutil.move(addon_path, addon_path+".bu")
+
+    try:
+        zip = zipfile.ZipFile(local_filename)
+        zip.extractall(path=addon_dir)
+        zip.close()
+    except:
+        if os.path.exists(addon_path):
+            shutil.rmtree(addon_path)
+
+        if os.path.exists(addon_path+".bu"):
+            shutil.move(addon_path+".bu", addon_path)
+    else:
+        print('{} Installed'.format(addon_id))
+        if os.path.exists(addon_path+".bu"):
+            shutil.rmtree(addon_path+".bu")
+    finally:
+        os.remove(local_filename)
+
 def menu(url='', module='default'):
     cmds = ['install', 'update', 'plugin']
     installed_addons = [f for f in os.listdir(addon_dir) if os.path.isdir(os.path.join(addon_dir, f))]
@@ -62,29 +105,21 @@ def menu(url='', module='default'):
 
     if cmd == 'install':
         if not addon_id:
-            #to do: grab list of add-ons and allow select
-            raise ProxyException('Addon id required')
+            addons = get_addons()
+            keys   = addons.keys()
+    
+            for idx, addon in enumerate(keys):
+                if addon in installed_addons:
+                    addon += ' [INSTALLED]'
+
+                print('{}: {}'.format(idx, addon))
+
+            addon_id = keys[int(raw_input('Select: '))]
 
         if addon_id in installed_addons:
             raise ProxyException('{} already installed'.format(addon_id))
 
-        url = repo_url.format('/{addon_id}/{addon_id}-latest.zip'.format(addon_id=addon_id))
-        local_filename = os.path.join(addon_dir, addon_id+'.zip')
-
-        if os.path.exists(local_filename):
-            os.remove(local_filename)
-
-        r = requests.get(url, stream=True)
-        with open(local_filename, 'wb') as f:
-            shutil.copyfileobj(r.raw, f)
-
-        zip = zipfile.ZipFile(local_filename)
-        zip.extractall(path=addon_dir)
-        zip.close()
-
-        os.remove(local_filename)
-
-        print('{} Installed'.format(addon_id))
+        install(addon_id)
 
     elif cmd == 'update':
         if not addon_id:
@@ -92,7 +127,17 @@ def menu(url='', module='default'):
         else:
             to_update = [addon_id]
 
-        print('Update: {}'.format(to_update))
+        addons = get_addons()
+
+        for addon in to_update:
+            addon_xml_path = os.path.join(addon_dir, addon, 'addon.xml')
+            tree = ET.parse(addon_xml_path)
+            root = tree.getroot()
+            version = root.attrib['version']
+            if version == addons[addon]:
+                continue
+            
+            install(addon)
 
     elif cmd == 'plugin':
         if not addon_id:
