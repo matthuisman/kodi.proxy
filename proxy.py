@@ -48,8 +48,16 @@ def run():
 
     os.environ['ADDON_DEV'] = get_argv(3, '0')
 
-    _run(url, module)
+    if not url:
+        addons = [f for f in os.listdir(addon_dir) if os.path.isdir(os.path.join(addon_dir, f))]
 
+        for idx, addon in enumerate(addons):
+            print('{}: {}'.format(idx, addon))
+
+        selected = addons[int(raw_input('Select: '))]
+        url = 'plugin://{}/'.format(selected)
+
+    _run(url, module)
 
 def _run(url='', module='default'):
     if url == None:
