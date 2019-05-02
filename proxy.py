@@ -10,6 +10,7 @@ import xml.etree.ElementTree as ET
 import urlparse
 import urllib
 import imp
+import re
 
 import polib
 
@@ -35,7 +36,11 @@ def run():
 
     _run(url, module)
 
+
 def _run(url='', module='default'):
+    if url == None:
+        url = sys.argv[0]
+
     split      = urlparse.urlsplit(url)
     addon_id   = split.netloc or os.path.basename(os.getcwd())
 
@@ -62,6 +67,7 @@ def _run(url='', module='default'):
     os.chdir(addon_path)
     
     log("Calling {} {} {}".format(addon_id, module, sys.argv))
+    print("")
 
     f, filename, description = imp.find_module(addon_id, [addon_dir])
     package = imp.load_module(addon_id, f, filename, description)
@@ -105,8 +111,12 @@ def getInfoLabel(cline):
 
 def executebuiltin(function, wait=False):
     log("XBMC Builtin: {}".format(function))
+
     if function.startswith('XBMC.RunPlugin'):
-        _run(function.replace('XBMC.RunPlugin(', '').rstrip('")'))
+        return _run(function.replace('XBMC.RunPlugin(', '').rstrip('")'))
+    
+    if function == 'Container.Refresh':
+        return _run(url=None)
 
 def translatePath(path):
     translates = {
@@ -239,7 +249,8 @@ xbmcaddon.Addon.getAddonInfo       = Addon_getAddonInfo
 ## xbmcgui ##
 
 def Dialog_yesno(self, heading, line1, line2="", line3="", nolabel="No", yeslabel="Yes", autoclose=0):
-    return raw_input("{}: {} {} {}\n{}/({}): ".format(heading, line1, line2, line3, yeslabel, nolabel)).strip().lower() == yeslabel.strip().lower()
+    print("{}\n{} {} {}\n0: {}\n1: {}".format(heading, line1, line2, line3, nolabel, yeslabel))
+    return int(raw_input('Select: ').strip()) == 1
 
 def Dialog_ok(self, heading, line1, line2="", line3=""):
     raw_input('\n{}\n {} {} {} [OK]'.format(heading, line1, line2, line3))
@@ -384,8 +395,8 @@ def endOfDirectory(handle, succeeded=True, updateListing=False, cacheToDisc=True
         print('Title: {category}\nContent: {content}'.format(**DATA))
 
     for idx, item in enumerate(DATA['items']):
-        label = item[1].getLabel()
-        ## Need remove formatting
+        label = re.sub('\[.*?]','',item[1].getLabel())
+        ## Need remove formattingf
 
         print("{}: {}".format(idx, label))
 
