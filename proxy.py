@@ -3,8 +3,8 @@ import os
 
 kodi_home  = os.path.dirname(os.path.realpath(__file__))
 venv_dir   = os.path.join(kodi_home, '.env')
-addon_dir  = os.path.join(kodi_home, 'addons')
-addon_data = os.path.join(kodi_home, 'addon_data')
+addons_dir  = os.path.join(kodi_home, 'addons')
+addons_data = os.path.join(kodi_home, 'addon_data')
 temp_dir   = os.path.join(kodi_home, 'temp')
 
 DEBUG      = False
@@ -59,9 +59,9 @@ def get_addons():
     return addons
 
 def install(addon_id):
-    addon_path = os.path.join(addon_dir, addon_id)
+    addon_path = os.path.join(addons_dir, addon_id)
     url = repo_url.format('/{addon_id}/{addon_id}-latest.zip'.format(addon_id=addon_id))
-    local_filename = os.path.join(addon_dir, addon_id+'.zip')
+    local_filename = os.path.join(addons_dir, addon_id+'.zip')
 
     if os.path.exists(local_filename):
         os.remove(local_filename)
@@ -75,7 +75,7 @@ def install(addon_id):
 
     try:
         zip = zipfile.ZipFile(local_filename)
-        zip.extractall(path=addon_dir)
+        zip.extractall(path=addons_dir)
         zip.close()
     except:
         if os.path.exists(addon_path):
@@ -92,7 +92,7 @@ def install(addon_id):
 
 def menu(url='', module='default'):
     cmds = ['install', 'uninstall', 'update', 'plugin']
-    installed_addons = [f for f in os.listdir(addon_dir) if os.path.isdir(os.path.join(addon_dir, f))]
+    installed_addons = [f for f in os.listdir(addons_dir) if os.path.isdir(os.path.join(addons_dir, f))]
     split     = urlparse.urlsplit(url)
     addon_id  = split.netloc.lower()
     cmd       = split.scheme.lower()
@@ -131,7 +131,14 @@ def menu(url='', module='default'):
         if addon_id not in installed_addons:
             raise ProxyException('{} is not installed.'.format(addon_id))
 
-        print("Uninstall {}".format(addon_id))
+        addon_data = os.path.join(addons_data, addon_id)
+        if os.path.exists(addon_data) and int(raw_input('0: Keep addon data\n1: Delete addon data\nSelect :')) == 1:
+            shutil.rmtree(addon_data)
+
+        addon_dir = os.path.join(addons_dir, addon_id)
+        shutil.rmtree(addon_dir)
+
+        print('{} Uninstalled'.format(addon_id))
 
     elif cmd == 'update':
         if not addon_id:
@@ -150,7 +157,7 @@ def menu(url='', module='default'):
 
         addons = get_addons()
         for addon in to_update:
-            addon_xml_path = os.path.join(addon_dir, addon, 'addon.xml')
+            addon_xml_path = os.path.join(addons_dir, addon, 'addon.xml')
             tree = ET.parse(addon_xml_path)
             root = tree.getroot()
             version = root.attrib['version']
@@ -174,7 +181,7 @@ def _run(url=None, module='default'):
     split      = urlparse.urlsplit(url)
     addon_id   = split.netloc or os.path.basename(os.getcwd())
 
-    addon_path = os.path.join(addon_dir, addon_id)
+    addon_path = os.path.join(addons_dir, addon_id)
     fragment   = urllib.quote(split.fragment, ':&=') if split.fragment else ''
     query      = urllib.quote(split.query, ':&=') if split.query else ''
 
@@ -198,7 +205,7 @@ def _run(url=None, module='default'):
     log("Calling {} {} {}".format(addon_id, module, sys.argv))
     print("")
 
-    f, filename, description = imp.find_module(addon_id, [addon_dir])
+    f, filename, description = imp.find_module(addon_id, [addons_dir])
     package = imp.load_module(addon_id, f, filename, description)
 
     f, filename, description = imp.find_module(module, package.__path__)
@@ -297,8 +304,8 @@ def Addon_init(self, addon_id=None):
     self._info = {
         'id': addon_id,
         'name': addon_id,
-        'path': os.path.join(addon_dir, addon_id),
-        'profile': os.path.join(addon_data, addon_id),
+        'path': os.path.join(addons_dir, addon_id),
+        'profile': os.path.join(addons_data, addon_id),
         'version': '2.0.0',
         'fanart': 'fanart.jpg',
         'icon': 'icon.png',
