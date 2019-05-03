@@ -92,7 +92,9 @@ def install(addon_id):
 
 def menu(url='', module='default'):
     cmds = ['install', 'uninstall', 'update', 'plugin']
+
     installed_addons = [f for f in os.listdir(addons_dir) if os.path.isdir(os.path.join(addons_dir, f))]
+
     split     = urlparse.urlsplit(url)
     addon_id  = split.netloc.lower()
     cmd       = split.scheme.lower()
@@ -104,48 +106,69 @@ def menu(url='', module='default'):
         cmd = cmds[int(raw_input('Select: '))]
 
     if cmd == 'install':
+        addons = get_addons()
+        
         if not addon_id:
-            addons = get_addons()
-            keys   = addons.keys()
+            options = addons.keys()
+            options.append('all')
     
-            for idx, addon in enumerate(keys):
+            for idx, addon in enumerate(options):
                 if addon in installed_addons:
                     addon += ' [INSTALLED]'
 
                 print('{}: {}'.format(idx, addon))
 
-            addon_id = keys[int(raw_input('Select: '))]
+            addon_id = options[int(raw_input('Select: '))]
 
-        if addon_id in installed_addons:
+        if addon_id == 'all':
+            to_install = addons.keys()
+        elif addon_id in installed_addons:
             raise ProxyException('{} already installed'.format(addon_id))
+        else:
+            to_install = [addon_id]
 
-        install(addon_id)
+        for addon_id in to_install:
+            install(addon_id)
 
     elif cmd == 'uninstall':
+        if not installed_addons:
+            raise ProxyException('No addons installed')
+
         if not addon_id:
-            for idx, addon in enumerate(installed_addons):
+            options = installed_addons[:]
+            options.append('all')
+
+            for idx, addon in enumerate(options):
                 print('{}: {}'.format(idx, addon))
 
-            addon_id = installed_addons[int(raw_input('Select: '))]
+            addon_id = options[int(raw_input('Select: '))]
 
-        if addon_id not in installed_addons:
+        if addon_id == 'all':
+            to_uninstall = installed_addons
+        elif addon_id not in installed_addons:
             raise ProxyException('{} is not installed.'.format(addon_id))
+        else:
+            to_uninstall = [addon_id]
 
-        addon_data = os.path.join(addons_data, addon_id)
-        if os.path.exists(addon_data) and int(raw_input('0: Keep addon data\n1: Delete addon data\nSelect :')) == 1:
-            shutil.rmtree(addon_data)
+        for addon_id in to_uninstall:
+            addon_data = os.path.join(addons_data, addon_id)
+            if os.path.exists(addon_data) and int(raw_input('{}\n0: Keep addon data\n1: Delete addon data\nSelect :'.format(addon_id))) == 1:
+                shutil.rmtree(addon_data)
 
-        addon_dir = os.path.join(addons_dir, addon_id)
-        shutil.rmtree(addon_dir)
+            addon_dir = os.path.join(addons_dir, addon_id)
+            shutil.rmtree(addon_dir)
 
-        print('{} Uninstalled'.format(addon_id))
+            print('{} Uninstalled'.format(addon_id))
 
     elif cmd == 'update':
         if not addon_id:
-            for idx, addon in enumerate(installed_addons):
+            options = installed_addons[:]
+            options.append('all')
+
+            for idx, addon in enumerate(options):
                 print('{}: {}'.format(idx, addon))
 
-            addon_id = installed_addons[int(raw_input('Select: '))]
+            addon_id = options[int(raw_input('Select: '))]
 
         if addon_id == 'all':
             to_update = installed_addons
@@ -162,6 +185,7 @@ def menu(url='', module='default'):
             root = tree.getroot()
             version = root.attrib['version']
             if version == addons[addon]:
+                print('{}: Upto date'.format(addon))
                 continue
             
             install(addon)
