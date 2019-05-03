@@ -198,9 +198,9 @@ def menu(url='', module='default'):
             selected = installed_addons[int(raw_input('Select: '))]
             url = 'plugin://{}/'.format(selected)
 
-        _run(url, module)
+        run(url, module)
 
-def _run(url=None, module='default'):
+def run(url=None, module='default'):
     url        = url or get_argv(0, '')
     split      = urlparse.urlsplit(url)
     addon_id   = split.netloc or os.path.basename(os.getcwd())
@@ -273,10 +273,10 @@ def executebuiltin(function, wait=False):
     log("XBMC Builtin: {}".format(function))
 
     if function.startswith('XBMC.RunPlugin'):
-        return _run(function.replace('XBMC.RunPlugin(', '').rstrip('")'))
+        return run(function.replace('XBMC.RunPlugin(', '').rstrip('")'))
     
     if function == 'Container.Refresh':
-        return _run(url=None)
+        return run(url=None)
 
 def translatePath(path):
     translates = {
@@ -566,7 +566,7 @@ def endOfDirectory(handle, succeeded=True, updateListing=False, cacheToDisc=True
     selected = DATA['items'][index]
     url = selected[0]
     DATA = _init_data()
-    _run(url)
+    run(url)
 
 def setResolvedUrl(handle, succeeded, listitem):
     log("Resolved: {0}".format(listitem))
@@ -612,7 +612,8 @@ xbmcvfs.mkdir  = mkdir
 xbmcvfs.mkdirs = mkdirs
 xbmcvfs.delete = delete
 
-try:
-    menu(get_argv(1, ''), get_argv(2, 'default'))
-except ProxyException as e:
-    print(str(e))
+if __name__ == "__main__":
+    try:
+        menu(get_argv(1, ''), get_argv(2, 'default'))
+    except ProxyException as e:
+        print(str(e))
