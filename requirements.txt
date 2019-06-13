@@ -12,5 +12,4 @@ requests==2.19.1
 six==1.12.0
 typing==3.6.4
 urllib3==1.23
-pysqlite
 tornado

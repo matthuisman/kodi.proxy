@@ -7,7 +7,10 @@ addons_dir  = os.path.join(kodi_home, 'addons')
 addons_data = os.path.join(kodi_home, 'addon_data')
 temp_dir   = os.path.join(kodi_home, 'temp')
 
-DEBUG      = False
+PROXY_TYPE  = os.environ.get('PROXY_TYPE', 'SHELL')
+DEBUG       = int(os.environ.get('DEBUG', '0'))
+INTERACTIVE = PROXY_TYPE == 'SHELL'
+
 cmd        = os.path.basename(__file__)
 repo_url   = 'http://k.mjh.nz/.repository/{}'
 
@@ -408,15 +411,22 @@ xbmcaddon.Addon.getAddonInfo       = Addon_getAddonInfo
 
 ## xbmcgui ##
 
+def get_input(text, default=''):
+    if INTERACTIVE:
+        return raw_input(text)
+    else:
+        print(text)
+        return default
+
 def Dialog_yesno(self, heading, line1, line2="", line3="", nolabel="No", yeslabel="Yes", autoclose=0):
     print("{}\n{} {} {}\n0: {}\n1: {}".format(heading, line1, line2, line3, nolabel, yeslabel))
-    return int(raw_input('Select: ').strip()) == 1
+    return int(get_input('Select: ', '0').strip()) == 1
 
 def Dialog_ok(self, heading, line1, line2="", line3=""):
-    raw_input('\n{}\n {} {} {} [OK]'.format(heading, line1, line2, line3))
+    get_input('\n{}\n {} {} {} [OK]'.format(heading, line1, line2, line3))
 
 def Dialog_textviewer(self, heading, message):
-    raw_input('\n{}\n {} [OK]'.format(heading, message))
+    get_input('\n{}\n {} [OK]'.format(heading, message))
 
 def Dialog_notification(self, heading, message, icon="", time=0, sound=True):
     _func_print('Notification', locals())
@@ -425,16 +435,16 @@ def Dialog_select(self, heading, list, autoclose=0, preselect=-1, useDetails=Fal
     for idx, item in enumerate(list):
         print('{}: {}'.format(idx, item.encode('utf-8')))
 
-    return int(raw_input('{}: '.format(heading)))
+    return int(get_input('{}: '.format(heading), preselect))
 
 def Dialog_input(self, heading, defaultt="", type=0, option=0, autoclose=0):
-    return raw_input('{0} ({1}): '.format(heading, defaultt)).strip() or defaultt
+    return get_input('{0} ({1}): '.format(heading, defaultt)).strip() or defaultt
 
 def DialogProgress_create(self, heading, line1="", line2="", line3=""):
     print('Progress: {} {} {} {}'.format(heading, line1, line2, line3))
 
 def Dialog_browseSingle(self, type, heading, shares, mask='', useThumbs=False, treatAsFolder=False, defaultt=''):
-    return raw_input('{0} ({1}): '.format(heading, defaultt)).strip() or defaultt
+    return get_input('{0} ({1}): '.format(heading, defaultt)).strip() or defaultt
 
 def ListItem_init(self, label="", label2="", iconImage="", thumbnailImage="", path="", offscreen=False):
     self._data = defaultdict(dict)
@@ -570,7 +580,11 @@ def endOfDirectory(handle, succeeded=True, updateListing=False, cacheToDisc=True
 
 def setResolvedUrl(handle, succeeded, listitem):
     log("Resolved: {0}".format(listitem))
-    print(listitem.getPath())
+
+    if PROXY_TYPE == 'TVH':
+        print("TVH")
+    else:
+        print(listitem.getPath())
 
 def addSortMethod(handle, sortMethod, label2Mask=""):
     global DATA
