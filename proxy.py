@@ -21,7 +21,7 @@ try:
     import xbmc
 except ImportError:
     if venv_dir:
-        activate_this_file = os.path.join(venv_dir, 'Scripts/activate_this.py')
+        activate_this_file = os.path.join(venv_dir, 'bin/activate_this.py')
         execfile(activate_this_file, dict(__file__=activate_this_file))
     else:
         raise Exception('Unable to import xbmc (kodi) python library')
@@ -590,6 +590,7 @@ def setResolvedUrl(handle, succeeded, listitem):
         output_shell(listitem)
 
 def output_shell(listitem):
+    print(sys.argv[0] + sys.argv[2])
     print(listitem.getPath())
 
 def output_tvh(listitem):
