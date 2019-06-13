@@ -233,7 +233,6 @@ def run(url=None, module='default'):
     os.chdir(addon_path)
     
     log("Calling {} {} {}".format(addon_id, module, sys.argv))
-    print("")
 
     f, filename, description = imp.find_module(addon_id, [addons_dir])
     package = imp.load_module(addon_id, f, filename, description)
@@ -584,24 +583,35 @@ def endOfDirectory(handle, succeeded=True, updateListing=False, cacheToDisc=True
 def setResolvedUrl(handle, succeeded, listitem):
     log("Resolved: {0}".format(listitem))
 
-    path = listitem.getPath()
-
     if PROXY_TYPE == TVHEADEND:
-        output_tvh(path)
+        output_tvh(listitem)
     else:
-        output_shell(path)
+        output_shell(listitem)
 
-def output_shell(path):
-    print(path)
+def output_shell(listitem):
+    print(listitem.getPath())
 
-def output_tvh(path):
-    if '|' in url:
+def output_tvh(listitem):
+    path = listitem.getPath()
+    name = listitem.getLabel().strip()
+
+    if '|' in path:
         url, headers = path.split('|')
+
+        _headers = urlparse.parse_qsl(headers)
+
+        headers = '-headers '
+        for pair in _headers:
+            headers += '{key}:\ {value}\r\n'.format(key=pair[0].strip().replace(' ', '\ '), value=pair[1].strip().replace(' ', '\ '))
+
+        headers += ' '
     else:
         url, headers = path, ''
 
-    print(url)
-    print(headers)
+    if name:
+        name = '-metadata service_name={name} '.format(name=name)
+
+    print('-loglevel fatal {headers}-i {url} -vcodec copy -acodec copy {name}-f mpegts pipe:1'.format(headers=headers, url=url, name=name))
 
 def addSortMethod(handle, sortMethod, label2Mask=""):
     global DATA
