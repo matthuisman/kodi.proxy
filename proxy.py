@@ -7,9 +7,12 @@ addons_dir  = os.path.join(kodi_home, 'addons')
 addons_data = os.path.join(kodi_home, 'addon_data')
 temp_dir   = os.path.join(kodi_home, 'temp')
 
-PROXY_TYPE  = os.environ.get('PROXY_TYPE', 'SHELL')
+TVHEADEND = 'TVH'
+SHELL     = 'SHELL'
+
+PROXY_TYPE  = os.environ.get('PROXY_TYPE', SHELL)
 DEBUG       = int(os.environ.get('DEBUG', '0'))
-INTERACTIVE = PROXY_TYPE == 'SHELL'
+INTERACTIVE = PROXY_TYPE == SHELL
 
 cmd        = os.path.basename(__file__)
 repo_url   = 'http://k.mjh.nz/.repository/{}'
@@ -581,10 +584,24 @@ def endOfDirectory(handle, succeeded=True, updateListing=False, cacheToDisc=True
 def setResolvedUrl(handle, succeeded, listitem):
     log("Resolved: {0}".format(listitem))
 
-    if PROXY_TYPE == 'TVH':
-        print("TVH")
+    path = listitem.getPath()
+
+    if PROXY_TYPE == TVHEADEND:
+        output_tvh(path)
     else:
-        print(listitem.getPath())
+        output_shell(path)
+
+def output_shell(path):
+    print(path)
+
+def output_tvh(path):
+    if '|' in url:
+        url, headers = path.split('|')
+    else:
+        url, headers = path, ''
+
+    print(url)
+    print(headers)
 
 def addSortMethod(handle, sortMethod, label2Mask=""):
     global DATA
