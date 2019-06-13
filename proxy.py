@@ -109,7 +109,7 @@ def menu(url='', module='default'):
         for idx, option in enumerate(cmds):
             print('{}: {}'.format(idx, option))
         
-        cmd = cmds[int(raw_input('Select: '))]
+        cmd = cmds[int(get_input('Select: '))]
 
     if cmd == 'install':
         addons = get_addons()
@@ -124,7 +124,7 @@ def menu(url='', module='default'):
 
                 print('{}: {}'.format(idx, addon))
 
-            addon_id = options[int(raw_input('Select: '))]
+            addon_id = options[int(get_input('Select: '))]
 
         if addon_id == 'all':
             to_install = addons.keys()
@@ -147,7 +147,7 @@ def menu(url='', module='default'):
             for idx, addon in enumerate(options):
                 print('{}: {}'.format(idx, addon))
 
-            addon_id = options[int(raw_input('Select: '))]
+            addon_id = options[int(get_input('Select: '))]
 
         if addon_id == 'all':
             to_uninstall = installed_addons
@@ -158,7 +158,7 @@ def menu(url='', module='default'):
 
         for addon_id in to_uninstall:
             addon_data = os.path.join(addons_data, addon_id)
-            if os.path.exists(addon_data) and int(raw_input('{}\n0: Keep addon data\n1: Delete addon data\nSelect :'.format(addon_id))) == 1:
+            if os.path.exists(addon_data) and int(get_input('{}\n0: Keep addon data\n1: Delete addon data\nSelect :'.format(addon_id))) == 1:
                 shutil.rmtree(addon_data)
 
             addon_dir = os.path.join(addons_dir, addon_id)
@@ -174,7 +174,7 @@ def menu(url='', module='default'):
             for idx, addon in enumerate(options):
                 print('{}: {}'.format(idx, addon))
 
-            addon_id = options[int(raw_input('Select: '))]
+            addon_id = options[int(get_input('Select: '))]
 
         if addon_id == 'all':
             to_update = installed_addons
@@ -201,7 +201,7 @@ def menu(url='', module='default'):
             for idx, addon in enumerate(installed_addons):
                 print('{}: {}'.format(idx, addon))
 
-            selected = installed_addons[int(raw_input('Select: '))]
+            selected = installed_addons[int(get_input('Select: '))]
             url = 'plugin://{}/'.format(selected)
 
         run(url, module)
@@ -574,11 +574,12 @@ def endOfDirectory(handle, succeeded=True, updateListing=False, cacheToDisc=True
 
         print("{}: {}".format(idx, label))
 
-    index = int(raw_input('Select: '))
-    selected = DATA['items'][index]
-    url = selected[0]
-    DATA = _init_data()
-    run(url)
+    index = int(get_input('Select: ', -1))
+    if index >= 0:
+        selected = DATA['items'][index]
+        url = selected[0]
+        DATA = _init_data()
+        run(url)
 
 def setResolvedUrl(handle, succeeded, listitem):
     log("Resolved: {0}".format(listitem))
@@ -612,6 +613,7 @@ def output_tvh(listitem):
         name = '-metadata service_name={name} '.format(name=name)
 
     print('-loglevel fatal {headers}-i {url} -vcodec copy -acodec copy {name}-f mpegts pipe:1'.format(headers=headers, url=url, name=name))
+    sys.exit(0)
 
 def addSortMethod(handle, sortMethod, label2Mask=""):
     global DATA
@@ -658,3 +660,5 @@ if __name__ == "__main__":
         menu(get_argv(1, ''), get_argv(2, 'default'))
     except ProxyException as e:
         print(str(e))
+
+sys.exit(1)
