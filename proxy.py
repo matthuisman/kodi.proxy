@@ -604,7 +604,7 @@ def output_tvh(listitem):
 
         headers = "-headers '"
         for pair in _headers:
-            headers += "{key}: {value}\r\n".format(key=pair[0].strip(), value=pair[1].strip())
+            headers += "{key}: {value}\r\n".format(key=pair[0], value=pair[1])
 
         headers += "' "
     else:
@@ -614,7 +614,7 @@ def output_tvh(listitem):
         name = '-metadata service_name={name} '.format(name=name)
 
     print("-loglevel fatal {headers}-i {url} -vcodec copy -acodec copy {name}-f mpegts pipe:1".format(headers=headers, url=url, name=name))
-    sys.exit(0)
+    sys.exit(200)
 
 def addSortMethod(handle, sortMethod, label2Mask=""):
     global DATA
@@ -661,5 +661,3 @@ if __name__ == "__main__":
         menu(get_argv(1, ''), get_argv(2, 'default'))
     except ProxyException as e:
         print(str(e))
-
-sys.exit(1)
