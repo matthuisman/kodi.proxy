@@ -602,18 +602,18 @@ def output_tvh(listitem):
 
         _headers = urlparse.parse_qsl(headers)
 
-        headers = '-headers '
+        headers = "-headers '"
         for pair in _headers:
-            headers += '{key}:\ {value}\r\n'.format(key=pair[0].strip().replace(' ', '\ '), value=pair[1].strip().replace(' ', '\ '))
+            headers += "{key}: {value}\r\n".format(key=pair[0].strip(), value=pair[1].strip())
 
-        headers += ' '
+        headers += "' "
     else:
         url, headers = path, ''
 
     if name:
         name = '-metadata service_name={name} '.format(name=name)
 
-    print('-loglevel fatal {headers}-i {url} -vcodec copy -acodec copy {name}-f mpegts pipe:1'.format(headers=headers, url=url, name=name))
+    print("-loglevel fatal {headers}-i {url} -vcodec copy -acodec copy {name}-f mpegts pipe:1".format(headers=headers, url=url, name=name))
     sys.exit(0)
 
 def addSortMethod(handle, sortMethod, label2Mask=""):
