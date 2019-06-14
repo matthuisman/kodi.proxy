@@ -1,21 +1,24 @@
 #!/usr/bin/env python2
 import os
 
-kodi_home  = os.path.dirname(os.path.realpath(__file__))
-venv_dir   = os.path.join(kodi_home, '.env')
+kodi_home   = os.path.dirname(os.path.realpath(__file__))
+venv_dir    = os.path.join(kodi_home, '.env')
 addons_dir  = os.path.join(kodi_home, 'addons')
 addons_data = os.path.join(kodi_home, 'addon_data')
-temp_dir   = os.path.join(kodi_home, 'temp')
+temp_dir    = os.path.join(kodi_home, 'temp')
 
-TVHEADEND = 'TVH'
-SHELL     = 'SHELL'
+TVHEADEND   = 'TVH'
+SHELL       = 'SHELL'
 
 PROXY_TYPE  = os.environ.get('PROXY_TYPE', SHELL)
 DEBUG       = int(os.environ.get('DEBUG', '0'))
 INTERACTIVE = PROXY_TYPE == SHELL
 
-cmd        = os.path.basename(__file__)
-repo_url   = 'http://k.mjh.nz/.repository/{}'
+cmd         = os.path.basename(__file__)
+repo_url    = 'http://k.mjh.nz/.repository/{}'
+
+if not os.path.exists(temp_dir):
+    os.makedirs(temp_dir)
 
 try:
     import xbmc
@@ -282,6 +285,10 @@ def _func_print(name, locals):
 
 ## xbmc ##
 
+INFO_LABELS = {
+    'System.BuildVersion': '18.0.1',
+}
+
 LOG_LABELS = {
     xbmc.LOGNONE: 'None',
     xbmc.LOGDEBUG: 'DEBUG',
@@ -296,18 +303,20 @@ def log(msg, level=xbmc.LOGDEBUG):
         print('{} - {}'.format(LOG_LABELS[level], msg))
 
 def getInfoLabel(cline):
-    return {
-        'System.BuildVersion': '18.0.1',
-    }.get(cline, "")
+    return INFO_LABELS.get(cline, '')
 
 def executebuiltin(function, wait=False):
     log("XBMC Builtin: {}".format(function))
 
-    if function.startswith('XBMC.RunPlugin'):
-        return run(function.replace('XBMC.RunPlugin(', '').rstrip('")'))
-    
     if function == 'Container.Refresh':
         return run(url=None)
+
+    if function.startswith('XBMC.RunPlugin'):
+        return run(function.replace('XBMC.RunPlugin(', '').rstrip('")'))
+
+    if function.startswith('Skin.SetString'):
+        key, value = function.replace('Skin.SetString(', '').rstrip(')').split(',')
+        INFO_LABELS['Skin.String({})'.format(key)] = value
 
 def translatePath(path):
     translates = {
@@ -340,6 +349,14 @@ def Montor_waitForAbort(self, timeout=0):
 def Montor_abortRequested(self):
     return False
 
+def executeJSONRPC(json_string):
+    try:
+        r = requests.post('http://127.0.0.1:8080/jsonrpc', json=json.loads(json_string), headers={'content-type': 'application/json'}, timeout=5)
+        return r.content
+    except:
+        log('JSON RPC Failed Request: {}'.format(json_string))
+        return '{}'
+
 xbmc.log                    = log
 xbmc.getInfoLabel           = getInfoLabel
 xbmc.executebuiltin         = executebuiltin
@@ -349,6 +366,7 @@ xbmc.Player.play            = Player_play
 xbmc.Monitor.waitForAbort   = Montor_waitForAbort
 xbmc.Monitor.abortRequested = Montor_abortRequested
 xbmc.getLanguage            = getLanguage
+xbmc.executeJSONRPC         = executeJSONRPC
 
 ## xbmcaddon ##
 
@@ -460,6 +478,8 @@ def Dialog_notification(self, heading, message, icon="", time=0, sound=True):
     _func_print('Notification', locals())
 
 def Dialog_select(self, heading, list, autoclose=0, preselect=-1, useDetails=False):
+    print('-1: Cancel')
+    
     for idx, item in enumerate(list):
         print('{}: {}'.format(idx, item.encode('utf-8')))
 
