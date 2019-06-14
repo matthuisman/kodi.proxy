@@ -104,19 +104,23 @@ def menu(url='', module='default'):
     split     = urlparse.urlsplit(url)
     addon_id  = split.netloc.lower()
     cmd       = split.scheme.lower()
+    
+    if INTERACTIVE:
+        print("")
 
     if cmd not in cmds:
         for idx, option in enumerate(cmds):
             print('{}: {}'.format(idx, option))
         
-        cmd = cmds[int(get_input('Select: '))]
+        cmd = cmds[int(get_input('\nSelect: '))]
+        return menu(url='{}://'.format(cmd))
 
     if cmd == 'install':
         addons = get_addons()
         
         if not addon_id:
             options = addons.keys()
-            options.append('all')
+            options.insert(0, 'all')
     
             for idx, addon in enumerate(options):
                 if addon in installed_addons:
@@ -124,7 +128,8 @@ def menu(url='', module='default'):
 
                 print('{}: {}'.format(idx, addon))
 
-            addon_id = options[int(get_input('Select: '))]
+            addon_id = options[int(get_input('\nSelect: '))]
+            return menu(url='install://{}'.format(addon_id))
 
         if addon_id == 'all':
             to_install = addons.keys()
@@ -142,12 +147,13 @@ def menu(url='', module='default'):
 
         if not addon_id:
             options = installed_addons[:]
-            options.append('all')
+            options.insert(0, 'all')
 
             for idx, addon in enumerate(options):
                 print('{}: {}'.format(idx, addon))
 
-            addon_id = options[int(get_input('Select: '))]
+            addon_id = options[int(get_input('\nSelect: '))]
+            return menu(url='uninstall://{}'.format(addon_id))
 
         if addon_id == 'all':
             to_uninstall = installed_addons
@@ -158,7 +164,7 @@ def menu(url='', module='default'):
 
         for addon_id in to_uninstall:
             addon_data = os.path.join(addons_data, addon_id)
-            if os.path.exists(addon_data) and int(get_input('{}\n0: Keep addon data\n1: Delete addon data\nSelect :'.format(addon_id))) == 1:
+            if os.path.exists(addon_data) and int(get_input('{}\n\n0: Keep addon data\n1: Delete addon data\n\nSelect :'.format(addon_id))) == 1:
                 shutil.rmtree(addon_data)
 
             addon_dir = os.path.join(addons_dir, addon_id)
@@ -169,12 +175,13 @@ def menu(url='', module='default'):
     elif cmd == 'update':
         if not addon_id:
             options = installed_addons[:]
-            options.append('all')
+            options.insert(0, 'all')
 
             for idx, addon in enumerate(options):
                 print('{}: {}'.format(idx, addon))
 
-            addon_id = options[int(get_input('Select: '))]
+            addon_id = options[int(get_input('\nSelect: '))]
+            return menu(url='update://{}'.format(addon_id))
 
         if addon_id == 'all':
             to_update = installed_addons
@@ -201,12 +208,18 @@ def menu(url='', module='default'):
             for idx, addon in enumerate(installed_addons):
                 print('{}: {}'.format(idx, addon))
 
-            selected = installed_addons[int(get_input('Select: '))]
-            url = 'plugin://{}/'.format(selected)
+            addon_id = installed_addons[int(get_input('\nSelect: '))]
+            return menu(url='plugin://{}'.format(addon_id))
 
         run(url, module)
 
+start_path   = None
+last_path    = None
+current_path = None
+
 def run(url=None, module='default'):
+    global last_path, current_path, start_path
+
     url        = url or get_argv(0, '')
     split      = urlparse.urlsplit(url)
     addon_id   = split.netloc or os.path.basename(os.getcwd())
@@ -221,6 +234,19 @@ def run(url=None, module='default'):
         query = '?' + query
     elif fragment:
         query = '#' + fragment
+
+    if not start_path:
+        start_path = url
+
+    if last_path == start_path:
+        last_path = None
+    else:
+        last_path = current_path
+
+    current_path = url
+
+    if INTERACTIVE:
+        print(current_path+'\n')
 
     url = '{}://{}{}'.format(split.scheme or 'plugin', addon_id, split.path or '/')
 
@@ -559,12 +585,16 @@ def addDirectoryItems(handle, items, totalItems=0):
     return True
 
 def endOfDirectory(handle, succeeded=True, updateListing=False, cacheToDisc=True):
-    global DATA
+    global DATA, last_path
+
     if not succeeded:
         return
 
     if DEBUG:
         print('Title: {category}\nContent: {content}'.format(**DATA))
+
+    if last_path:
+        DATA['items'].insert(0, [last_path, xbmcgui.ListItem(label='BACK')])
 
     FORMAT_TAGS = ['B', 'COLOR']
     for idx, item in enumerate(DATA['items']):
@@ -574,7 +604,7 @@ def endOfDirectory(handle, succeeded=True, updateListing=False, cacheToDisc=True
 
         print("{}: {}".format(idx, label))
 
-    index = int(get_input('Select: ', -1))
+    index = int(get_input('\nSelect: ', -1))
     if index >= 0:
         selected = DATA['items'][index]
         url = selected[0]
@@ -590,8 +620,15 @@ def setResolvedUrl(handle, succeeded, listitem):
         output_shell(listitem)
 
 def output_shell(listitem):
-    print(sys.argv[0] + sys.argv[2])
-    print(listitem.getPath())
+    path = listitem.getPath()
+
+    if '|' in path:
+        url, headers = path.split('|')
+    else:
+        url, headers = path, ''
+
+    print('URL: {}'.format(url))
+    print('Headers: {}'.format(headers))
 
 def output_tvh(listitem):
     path = listitem.getPath()
