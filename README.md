@@ -7,6 +7,8 @@ pip install virtualenv
 virtualenv --python=python2.7 .env
 source .env/bin/activate
 pip install -r requirements.txt
+chmod +x proxy.py
+chmod +x tvh.sh
 ./proxy.py
 ```
 
