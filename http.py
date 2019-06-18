@@ -1,6 +1,4 @@
 #!/usr/bin/env python
-import urllib
-
 import tornado.ioloop
 import tornado.web
 
