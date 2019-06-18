@@ -57,9 +57,9 @@ def get_addons():
 
     return addons
 
-def install(addon_id):
+def install(addon_id, version):
     addon_path = os.path.join(addons_dir, addon_id)
-    url = repo_url.format('/{addon_id}/{addon_id}-latest.zip'.format(addon_id=addon_id))
+    url = repo_url.format('/{addon_id}/{addon_id}-{version}.zip'.format(addon_id=addon_id, version=version))
     local_filename = os.path.join(addons_dir, addon_id+'.zip')
 
     if os.path.exists(local_filename):
@@ -83,7 +83,7 @@ def install(addon_id):
         if os.path.exists(addon_path+".bu"):
             shutil.move(addon_path+".bu", addon_path)
     else:
-        _print('{} Installed'.format(addon_id))
+        _print('{} ({}): Installed'.format(addon_id, version))
         if os.path.exists(addon_path+".bu"):
             shutil.rmtree(addon_path+".bu")
     finally:
@@ -131,7 +131,7 @@ def menu(url='', module='default'):
             to_install = [addon_id]
 
         for addon_id in to_install:
-            install(addon_id)
+            install(addon_id, addons[addon_id])
 
     elif cmd == 'uninstall':
         if not installed_addons:
@@ -189,11 +189,12 @@ def menu(url='', module='default'):
             tree = ET.parse(addon_xml_path)
             root = tree.getroot()
             version = root.attrib['version']
+ 
             if version == addons[addon]:
-                _print('{}: Upto date'.format(addon))
+                _print('{} ({}): Upto date'.format(addon, version))
                 continue
             
-            install(addon)
+            install(addon, addons[addon])
 
     elif cmd == 'plugin':
         if not addon_id:
