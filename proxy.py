@@ -1,5 +1,21 @@
-#!/usr/bin/env python2
 import os
+import sys
+import time
+import io
+import json
+import shutil
+import traceback
+from collections import defaultdict
+import xml.etree.ElementTree as ET
+import urlparse
+import imp
+import urllib
+import re
+import requests
+import zipfile
+
+import polib
+import xbmc, xbmcaddon, xbmcgui, xbmcplugin, xbmcvfs
 
 kodi_home   = os.path.dirname(os.path.realpath(__file__))
 venv_dir    = os.path.join(kodi_home, '.env')
@@ -19,33 +35,6 @@ repo_url    = 'http://k.mjh.nz/.repository/{}'
 
 if not os.path.exists(temp_dir):
     os.makedirs(temp_dir)
-
-try:
-    import xbmc
-except ImportError:
-    if venv_dir:
-        activate_this_file = os.path.join(venv_dir, 'bin/activate_this.py')
-        execfile(activate_this_file, dict(__file__=activate_this_file))
-    else:
-        raise Exception('Unable to import xbmc (kodi) python library')
-
-import sys
-import time
-import io
-import json
-import shutil
-import traceback
-from collections import defaultdict
-import xml.etree.ElementTree as ET
-import urlparse
-import imp
-import urllib
-import re
-import requests
-import zipfile
-
-import polib
-import xbmc, xbmcaddon, xbmcgui, xbmcplugin, xbmcvfs
 
 class ProxyException(Exception):
     pass
@@ -93,7 +82,7 @@ def install(addon_id):
         if os.path.exists(addon_path+".bu"):
             shutil.move(addon_path+".bu", addon_path)
     else:
-        print('{} Installed'.format(addon_id))
+        _print('{} Installed'.format(addon_id))
         if os.path.exists(addon_path+".bu"):
             shutil.rmtree(addon_path+".bu")
     finally:
@@ -108,12 +97,11 @@ def menu(url='', module='default'):
     addon_id  = split.netloc.lower()
     cmd       = split.scheme.lower()
     
-    if INTERACTIVE:
-        print("")
+    _print("")
 
     if cmd not in cmds:
         for idx, option in enumerate(cmds):
-            print('{}: {}'.format(idx, option))
+            _print('{}: {}'.format(idx, option))
         
         cmd = cmds[int(get_input('\nSelect: '))]
         return menu(url='{}://'.format(cmd))
@@ -129,7 +117,7 @@ def menu(url='', module='default'):
                 if addon in installed_addons:
                     addon += ' [INSTALLED]'
 
-                print('{}: {}'.format(idx, addon))
+                _print('{}: {}'.format(idx, addon))
 
             addon_id = options[int(get_input('\nSelect: '))]
             return menu(url='install://{}'.format(addon_id))
@@ -153,7 +141,7 @@ def menu(url='', module='default'):
             options.insert(0, 'all')
 
             for idx, addon in enumerate(options):
-                print('{}: {}'.format(idx, addon))
+                _print('{}: {}'.format(idx, addon))
 
             addon_id = options[int(get_input('\nSelect: '))]
             return menu(url='uninstall://{}'.format(addon_id))
@@ -173,7 +161,7 @@ def menu(url='', module='default'):
             addon_dir = os.path.join(addons_dir, addon_id)
             shutil.rmtree(addon_dir)
 
-            print('{} Uninstalled'.format(addon_id))
+            _print('{} Uninstalled'.format(addon_id))
 
     elif cmd == 'update':
         if not addon_id:
@@ -181,7 +169,7 @@ def menu(url='', module='default'):
             options.insert(0, 'all')
 
             for idx, addon in enumerate(options):
-                print('{}: {}'.format(idx, addon))
+               _print('{}: {}'.format(idx, addon))
 
             addon_id = options[int(get_input('\nSelect: '))]
             return menu(url='update://{}'.format(addon_id))
@@ -201,7 +189,7 @@ def menu(url='', module='default'):
             root = tree.getroot()
             version = root.attrib['version']
             if version == addons[addon]:
-                print('{}: Upto date'.format(addon))
+                _print('{}: Upto date'.format(addon))
                 continue
             
             install(addon)
@@ -209,7 +197,7 @@ def menu(url='', module='default'):
     elif cmd == 'plugin':
         if not addon_id:
             for idx, addon in enumerate(installed_addons):
-                print('{}: {}'.format(idx, addon))
+                _print('{}: {}'.format(idx, addon))
 
             addon_id = installed_addons[int(get_input('\nSelect: '))]
             return menu(url='plugin://{}'.format(addon_id))
@@ -248,8 +236,7 @@ def run(url=None, module='default'):
 
     current_path = url
 
-    if INTERACTIVE:
-        print(current_path+'\n')
+    _print(current_path+'\n')
 
     url = '{}://{}{}'.format(split.scheme or 'plugin', addon_id, split.path or '/')
 
@@ -300,7 +287,7 @@ LOG_LABELS = {
 
 def log(msg, level=xbmc.LOGDEBUG):
     if DEBUG:
-        print('{} - {}'.format(LOG_LABELS[level], msg))
+        _print('{} - {}'.format(LOG_LABELS[level], msg))
 
 def getInfoLabel(cline):
     return INFO_LABELS.get(cline, '')
@@ -461,11 +448,15 @@ def get_input(text, default=''):
     if INTERACTIVE:
         return raw_input(text)
     else:
-        print(text)
+        _print(text)
         return default
 
+def _print(text):
+    if INTERACTIVE or DEBUG:
+        print(text)
+
 def Dialog_yesno(self, heading, line1, line2="", line3="", nolabel="No", yeslabel="Yes", autoclose=0):
-    print("{}\n{} {} {}\n0: {}\n1: {}".format(heading, line1, line2, line3, nolabel, yeslabel))
+    _print("{}\n{} {} {}\n0: {}\n1: {}".format(heading, line1, line2, line3, nolabel, yeslabel))
     return int(get_input('Select: ', '0').strip()) == 1
 
 def Dialog_ok(self, heading, line1, line2="", line3=""):
@@ -478,7 +469,7 @@ def Dialog_notification(self, heading, message, icon="", time=0, sound=True):
     _func_print('Notification', locals())
 
 def Dialog_select(self, heading, list, autoclose=0, preselect=-1, useDetails=False):
-    print('-1: Cancel')
+    _print('-1: Cancel')
     
     for idx, item in enumerate(list):
         print('{}: {}'.format(idx, item.encode('utf-8')))
@@ -489,7 +480,7 @@ def Dialog_input(self, heading, defaultt="", type=0, option=0, autoclose=0):
     return get_input('{0} ({1}): '.format(heading, defaultt)).strip() or defaultt
 
 def DialogProgress_create(self, heading, line1="", line2="", line3=""):
-    print('Progress: {} {} {} {}'.format(heading, line1, line2, line3))
+    _print('Progress: {} {} {} {}'.format(heading, line1, line2, line3))
 
 def Dialog_browseSingle(self, type, heading, shares, mask='', useThumbs=False, treatAsFolder=False, defaultt=''):
     return get_input('{0} ({1}): '.format(heading, defaultt)).strip() or defaultt
@@ -611,7 +602,7 @@ def endOfDirectory(handle, succeeded=True, updateListing=False, cacheToDisc=True
         return
 
     if DEBUG:
-        print('Title: {category}\nContent: {content}'.format(**DATA))
+        _print('Title: {category}\nContent: {content}'.format(**DATA))
 
     if last_path:
         DATA['items'].insert(0, [last_path, xbmcgui.ListItem(label='BACK')])
@@ -622,7 +613,7 @@ def endOfDirectory(handle, succeeded=True, updateListing=False, cacheToDisc=True
         for tag in FORMAT_TAGS:
             label = re.sub('\[/?{}.*?]'.format(tag), '', label)
 
-        print("{}: {}".format(idx, label))
+        _print("{}: {}".format(idx, label))
 
     index = int(get_input('\nSelect: ', -1))
     if index >= 0:
@@ -647,8 +638,8 @@ def output_shell(listitem):
     else:
         url, headers = path, ''
 
-    print('URL: {}'.format(url))
-    print('Headers: {}'.format(headers))
+    _print('URL: {}'.format(url))
+    _print('Headers: {}'.format(headers))
 
 def output_tvh(listitem):
     path = listitem.getPath()
