@@ -636,7 +636,7 @@ def setResolvedUrl(handle, succeeded, listitem):
         output_shell(listitem)
 
 def output_http(listitem):
-    print(listitem.getPath())
+    raise Exception('Replace me!')
 
 def output_shell(listitem):
     path = listitem.getPath()

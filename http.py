@@ -4,13 +4,21 @@ import proxy
 import tornado.ioloop
 import tornado.web
 
-proxy.PROXY_TYPE = proxy.HTTP
+proxy.PROXY_TYPE  = proxy.HTTP
+proxy.INTERACTIVE = False
 
 class MainHandler(tornado.web.RequestHandler):
     def get(self, url):
-        result = proxy.menu(url)
-        print(result)
-        self.finish()
+        def output_http(listitem):
+             self.redirect(listitem.getPath(), status=302)
+
+        proxy.output_http = output_http
+
+        if '://' in url:
+            proxy.menu(url)
+        else:
+            self.set_status(404)
+            self.finish()
 
 def make_app():
     return tornado.web.Application([
