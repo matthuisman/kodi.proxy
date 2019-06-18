@@ -26,6 +26,7 @@ temp_dir    = os.path.join(kodi_home, 'temp')
 
 TVHEADEND   = 'TVH'
 SHELL       = 'SHELL'
+HTTP        = 'HTTP'
 
 PROXY_TYPE  = os.environ.get('PROXY_TYPE', SHELL)
 DEBUG       = int(os.environ.get('DEBUG', '0'))
@@ -629,8 +630,13 @@ def setResolvedUrl(handle, succeeded, listitem):
 
     if PROXY_TYPE == TVHEADEND:
         output_tvh(listitem)
+    elif PROXY_TYPE == HTTP:
+        output_http(listitem)
     else:
         output_shell(listitem)
+
+def output_http(listitem):
+    print(listitem.getPath())
 
 def output_shell(listitem):
     path = listitem.getPath()

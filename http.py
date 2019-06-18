@@ -4,9 +4,11 @@ import proxy
 import tornado.ioloop
 import tornado.web
 
+proxy.PROXY_TYPE = proxy.HTTP
+
 class MainHandler(tornado.web.RequestHandler):
     def get(self, url):
-        result = proxy.run(url)
+        result = proxy.menu(url)
         print(result)
         self.finish()
 
