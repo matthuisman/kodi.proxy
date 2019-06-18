@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 scriptdir=$(dirname "$0")
 OUTPUT="$(PROXY_TYPE=TVH DEBUG=0 $scriptdir/.env/bin/python $scriptdir/proxy.py $1)"
 
