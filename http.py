@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 import proxy
 
 import tornado.ioloop
@@ -6,14 +6,9 @@ import tornado.web
 
 class MainHandler(tornado.web.RequestHandler):
     def get(self, url):
-        if url.startswith('plugin://'):
-            print('Calling: {}'.format(url))
-
-            path = proxy.run(url)
-            print(path)
-        else:
-            self.set_status(404)
-            self.finish()
+        result = proxy.run(url)
+        print(result)
+        self.finish()
 
 def make_app():
     return tornado.web.Application([
