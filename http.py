@@ -1,14 +1,19 @@
 #!/usr/bin/env python
-import proxy
+import urllib
 
 import tornado.ioloop
 import tornado.web
+
+import proxy
 
 proxy.PROXY_TYPE  = proxy.HTTP
 proxy.INTERACTIVE = False
 
 class MainHandler(tornado.web.RequestHandler):
     def get(self, url):
+        if self.request.query:
+            url += '?' + self.request.query
+
         def output_http(listitem):
              self.redirect(listitem.getPath(), status=302)
 
