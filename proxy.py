@@ -667,9 +667,9 @@ def output_tvh(listitem):
         url, headers = path, ''
 
     if name:
-        name = '-metadata service_name={name} '.format(name=name)
+        name = "-metadata service_name='{name}' ".format(name=name)
 
-    print("-loglevel fatal {headers}-i {url} -vcodec copy -acodec copy {name}-f mpegts pipe:1".format(headers=headers, url=url, name=name))
+    print("-loglevel fatal {headers}-i '{url}' -vcodec copy -acodec copy {name}-f mpegts pipe:1".format(headers=headers, url=url, name=name))
     sys.exit(200)
 
 def addSortMethod(handle, sortMethod, label2Mask=""):
