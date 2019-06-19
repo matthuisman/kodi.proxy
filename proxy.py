@@ -340,12 +340,7 @@ def Montor_abortRequested(self):
     return False
 
 def executeJSONRPC(json_string):
-    try:
-        r = requests.post('http://127.0.0.1:8080/jsonrpc', json=json.loads(json_string), headers={'content-type': 'application/json'}, timeout=5)
-        return r.content
-    except:
-        log('JSON RPC Failed Request: {}'.format(json_string))
-        return '{}'
+    log('JSON RPC Request: {}'.format(json_string))
 
 xbmc.log                    = log
 xbmc.getInfoLabel           = getInfoLabel
