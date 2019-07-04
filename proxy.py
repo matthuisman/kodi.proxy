@@ -92,7 +92,7 @@ def install(addon_id, version):
         os.remove(local_filename)
 
 def menu(url='', module='default'):
-    cmds = ['install', 'uninstall', 'update', 'plugin', 'setting']
+    cmds = ['install', 'uninstall', 'update', 'plugin', 'settings']
 
     installed_addons = [f for f in os.listdir(addons_dir) if os.path.isdir(os.path.join(addons_dir, f))]
 
@@ -198,6 +198,26 @@ def menu(url='', module='default'):
             
             install(addon, addons[addon])
 
+    elif cmd == 'settings':
+        if not addon_id:
+            for idx, addon in enumerate(installed_addons):
+                _print('{}: {}'.format(idx, addon))
+
+            addon_id = installed_addons[int(get_input('\nSelect: '))]
+            return menu(url='settings://{}'.format(addon_id))
+
+        key   = 'epgPath' #need to parse from url
+        value = 'test' #need to parse from url
+
+        addon = xbmcaddon.Addon(addon_id)
+
+        if key and value:
+            addon.setSetting(key, value)
+        elif key:
+            _print(addon.getSetting(key))
+        else:
+            addon.openSettings()
+
     elif cmd == 'plugin':
         if not addon_id:
             for idx, addon in enumerate(installed_addons):
@@ -207,12 +227,6 @@ def menu(url='', module='default'):
             return menu(url='plugin://{}'.format(addon_id))
 
         run(url, module)
-
-    elif cmd == 'setting':
-        key = 'epgPath' #need to get from url
-
-        addon = xbmcaddon.Addon(addon_id)
-        _print(addon.getSetting(key))
 
 start_path   = None
 last_path    = None
@@ -424,6 +438,7 @@ def Addon_getLocalizedString(self, id):
 
 def Addon_openSettings(self):
     log("OPEN SETTINGS!")
+    #do settings dialog here!
 
 def Addon_getSetting(self, id):
     return str(self._settings.get(id, ""))

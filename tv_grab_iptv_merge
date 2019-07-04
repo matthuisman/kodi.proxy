@@ -12,7 +12,7 @@ if [ $# -lt 1 ]; then
     OUTPUT="$(PROXY_TYPE=TV_GRAB DEBUG=0 $scriptdir/.env/bin/python $scriptdir/proxy.py 'plugin://program.iptv.merge/?_=tv_grab')"
 
     if [ $? -eq 200 ]; then
-        EPG_PATH="$($scriptdir/.env/bin/python $scriptdir/proxy.py 'setting://pvr.iptvsimple/epgPath')"
+        EPG_PATH="$($scriptdir/.env/bin/python $scriptdir/proxy.py 'settings://pvr.iptvsimple/epgPath')"
         cat "$EPG_PATH"
     else
         >&2 echo "$OUTPUT"
