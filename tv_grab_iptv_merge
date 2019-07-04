@@ -1,0 +1,44 @@
+#!/bin/sh
+
+DESCRIPTION="tv_grab_iptv_merge (MattHuisman.nz)"
+VERSION="1.1"
+
+if [ $# -lt 1 ]; then
+    >&2 echo "Calling $URL..."
+
+    scriptdir=$(dirname "$0")
+    path="plugin://program.iptv.merge/"
+
+    OUTPUT="$(PROXY_TYPE=TV_GRAB DEBUG=0 $scriptdir/.env/bin/python $scriptdir/proxy.py 'plugin://program.iptv.merge/?_=tv_grab')"
+
+    if [ $? -eq 200 ]; then
+        EPG_PATH="$($scriptdir/.env/bin/python $scriptdir/proxy.py 'setting://pvr.iptvsimple/epgPath')"
+        cat "$EPG_PATH"
+    else
+        >&2 echo "$OUTPUT"
+    fi
+
+    exit 0
+fi
+
+dflag=
+vflag=
+cflag=
+
+for a in "$@"; do
+  [ "$a" = "-d" -o "$a" = "--description"  ] && dflag=1
+  [ "$a" = "-v" -o "$a" = "--version"      ] && vflag=1
+  [ "$a" = "-c" -o "$a" = "--capabilities" ] && cflag=1
+done
+
+if [ -n "$dflag" ]; then
+  echo $DESCRIPTION
+fi
+
+if [ -n "$vflag" ]; then
+  echo $VERSION
+fi
+
+if [ -n "$cflag" ]; then
+  echo "baseline"
+fi

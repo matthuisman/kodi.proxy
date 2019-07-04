@@ -27,6 +27,7 @@ temp_dir    = os.path.join(kodi_home, 'temp')
 TVHEADEND   = 'TVH'
 SHELL       = 'SHELL'
 HTTP        = 'HTTP'
+TV_GRAB     = 'TV_GRAB'
 
 PROXY_TYPE  = os.environ.get('PROXY_TYPE', SHELL)
 DEBUG       = int(os.environ.get('DEBUG', '0'))
@@ -91,7 +92,7 @@ def install(addon_id, version):
         os.remove(local_filename)
 
 def menu(url='', module='default'):
-    cmds = ['install', 'uninstall', 'update', 'plugin']
+    cmds = ['install', 'uninstall', 'update', 'plugin', 'setting']
 
     installed_addons = [f for f in os.listdir(addons_dir) if os.path.isdir(os.path.join(addons_dir, f))]
 
@@ -206,6 +207,12 @@ def menu(url='', module='default'):
             return menu(url='plugin://{}'.format(addon_id))
 
         run(url, module)
+
+    elif cmd == 'setting':
+        key = 'epgPath' #need to get from url
+
+        addon = xbmcaddon.Addon(addon_id)
+        _print(addon.getSetting(key))
 
 start_path   = None
 last_path    = None
