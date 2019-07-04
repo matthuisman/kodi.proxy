@@ -4,11 +4,9 @@ DESCRIPTION="tv_grab_iptv_merge (MattHuisman.nz)"
 VERSION="1.1"
 
 if [ $# -lt 1 ]; then
-    >&2 echo "Calling $URL..."
+    >&2 echo "Running iptv.merge plugin..."
 
     scriptdir=$(dirname "$0")
-    path="plugin://program.iptv.merge/"
-
     OUTPUT="$(PROXY_TYPE=TV_GRAB DEBUG=0 $scriptdir/.env/bin/python $scriptdir/proxy.py 'plugin://program.iptv.merge/?_=tv_grab')"
 
     if [ $? -eq 200 ]; then
