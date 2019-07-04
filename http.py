@@ -7,6 +7,10 @@ import proxy
 proxy.PROXY_TYPE  = proxy.HTTP
 proxy.INTERACTIVE = False
 
+
+##TODAY
+## Just use Python2 built-in webserver as very simple redirect logic
+
 class MainHandler(tornado.web.RequestHandler):
     def get(self, url):
         if self.request.query:
