@@ -60,6 +60,10 @@ def get_addons():
     return addons
 
 def install(addon_id, version):
+    ## Maybe we get add-on dependencies
+    ## then map these to pip modules (or actually download the python module from kodi server)
+    ## then remove all depends in requirements.txt
+
     addon_path = os.path.join(addons_dir, addon_id)
     url = repo_url.format('/{addon_id}/{addon_id}-{version}.zip'.format(addon_id=addon_id, version=version))
     local_filename = os.path.join(addons_dir, addon_id+'.zip')
@@ -91,15 +95,21 @@ def install(addon_id, version):
     finally:
         os.remove(local_filename)
 
+def _get_installed_addons():
+    return [f for f in os.listdir(addons_dir) if os.path.isdir(os.path.join(addons_dir, f))]
+
 def menu(url='', module='default'):
     cmds = ['install', 'uninstall', 'update', 'plugin', 'settings']
 
-    installed_addons = [f for f in os.listdir(addons_dir) if os.path.isdir(os.path.join(addons_dir, f))]
+    installed_addons = _get_installed_addons()
 
     split     = urlparse.urlsplit(url)
     addon_id  = split.netloc.lower()
     cmd       = split.scheme.lower()
     
+    if not cmd and not INTERACTIVE:
+        return
+
     _print("")
 
     if cmd not in cmds:
@@ -134,6 +144,8 @@ def menu(url='', module='default'):
 
         for addon_id in to_install:
             install(addon_id, addons[addon_id])
+
+        return menu()
 
     elif cmd == 'uninstall':
         if not installed_addons:
@@ -206,8 +218,8 @@ def menu(url='', module='default'):
             addon_id = installed_addons[int(get_input('\nSelect: '))]
             return menu(url='settings://{}'.format(addon_id))
 
-        key   = 'epgPath' #need to parse from url
-        value = 'test' #need to parse from url
+        key   = None #need to parse from url
+        value = None #need to parse from url
 
         addon = xbmcaddon.Addon(addon_id)
 
@@ -227,6 +239,8 @@ def menu(url='', module='default'):
             return menu(url='plugin://{}'.format(addon_id))
 
         run(url, module)
+
+    return menu()
 
 start_path   = None
 last_path    = None
@@ -363,6 +377,16 @@ def Montor_abortRequested(self):
 def executeJSONRPC(json_string):
     log('JSON RPC Request: {}'.format(json_string))
 
+    request = json.loads(json_string)
+    result  = {}
+
+    if request['method'] == 'Addons.GetAddons':
+        addons = _get_installed_addons()
+        rows   = [{'addonid': addon} for addon in addons]
+        result = {'result': {'addons': rows}}
+    
+    return json.dumps(result)
+
 xbmc.log                    = log
 xbmc.getInfoLabel           = getInfoLabel
 xbmc.executebuiltin         = executebuiltin
@@ -428,16 +452,12 @@ def Addon_init(self, addon_id=None):
         with io.open(settings_json_path, 'r', encoding='utf-8') as f:
             self._settings.update(json.loads(f.read()))
 
-    # if addon_id == 'inputstream.adaptive':
-    #     self._settings.update({
-    #         'DECRYPTERPATH': self._info['profile'],
-    #     })
-
 def Addon_getLocalizedString(self, id):
     return self._strings.get(id, '')
 
 def Addon_openSettings(self):
-    log("OPEN SETTINGS!")
+    _print("OPEN SETTINGS!")
+    _print(self._settings)
     #do settings dialog here!
 
 def Addon_getSetting(self, id):
