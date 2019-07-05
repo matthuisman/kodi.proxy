@@ -3,7 +3,7 @@
 SCRIPT="$(realpath $0)"
 SCRIPT_PATH="$(dirname $SCRIPT)"
 
-OUTPUT="$(PROXY_TYPE=TVH $SCRIPT_PATH/.env/bin/python $SCRIPT_PATH/proxy.py $1)"
+OUTPUT="$(proxy_type=TVH $SCRIPT_PATH/.env/bin/python $SCRIPT_PATH/proxy.py $1)"
 
 if [ $? -eq 200 ]; then
     eval "ffmpeg $OUTPUT"
