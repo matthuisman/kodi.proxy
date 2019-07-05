@@ -115,9 +115,12 @@ def menu(url='', module='default'):
     if cmd not in cmds:
         for idx, option in enumerate(cmds):
             _print('{}: {}'.format(idx, option))
-        
-        cmd = cmds[int(get_input('\nSelect: '))]
-        return menu(url='{}://'.format(cmd))
+
+        selected = int(get_input('\nSelect: '))
+        if selected < 0:
+            return
+
+        return menu(url='{}://'.format(cmds[selected]))
 
     if cmd == 'install':
         addons = get_addons()

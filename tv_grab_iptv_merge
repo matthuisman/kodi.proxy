@@ -1,6 +1,7 @@
 #!/bin/sh
 
-SCRIPT_PATH="$( cd "$(dirname "$0")" ; pwd -P )"
+SCRIPT="$(realpath $0)"
+SCRIPT_PATH="$(dirname $SCRIPT)"
 
 DESCRIPTION="tv_grab_iptv_merge (MattHuisman.nz)"
 VERSION="1.1"

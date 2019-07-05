@@ -1,6 +1,7 @@
 #!/bin/sh
 
-SCRIPT_PATH="$( cd "$(dirname "$0")" ; pwd -P )"
+SCRIPT="$(realpath $0)"
+SCRIPT_PATH="$(dirname $SCRIPT)"
 
 OUTPUT="$(PROXY_TYPE=TVH $SCRIPT_PATH/.env/bin/python $SCRIPT_PATH/proxy.py $1)"
 
