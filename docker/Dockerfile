@@ -3,7 +3,7 @@ FROM linuxserver/tvheadend
 RUN apk add --no-cache py-virtualenv wget
 
 RUN cd /usr/share \
-    && wget -O proxy.tar.gz https://codeload.github.com/matthuisman/kodi.proxy/tar.gz/d27524d61d2fe56b582e928e1820f345e1571a6b \
+    && wget -O proxy.tar.gz https://codeload.github.com/matthuisman/kodi.proxy/tar.gz/5e06d75b9e9eafcbee9972c8028b74db4df0387b \
     && tar -xf proxy.tar.gz \
     && rm proxy.tar.gz \
     && mv kodi.proxy-* kodi.proxy \
