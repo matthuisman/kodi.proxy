@@ -1,8 +1,8 @@
-# nas-tvh
+# tvheadend
 
 ```
 docker create \
-  --name=nas-tvh \
+  --name=tvheadend \
   -e PUID=1000 \
   -e PGID=1000 \
   -e TZ=Pacific/Auckland \
@@ -19,17 +19,17 @@ docker create \
 
 Run the below to install the IPTV Merge Plugin
 ```
-docker exec -it -u abc nas-tvh /usr/share/kodi.proxy/proxy "install://plugin.program.iptv.merge"
+docker exec -it -u abc tvheadend /usr/share/kodi.proxy/proxy "install://plugin.program.iptv.merge"
 ```
 
 Run the IPTV Merge Plugin to setup Playlists and EPG sources
 ```
-docker exec -it -u abc nas-tvh /usr/share/kodi.proxy/proxy "plugin://plugin.program.iptv.merge"
+docker exec -it -u abc tvheadend /usr/share/kodi.proxy/proxy "plugin://plugin.program.iptv.merge"
 ```
 
 Easily install / setup other plugins to be used as IPTV sources
 ```
-docker exec -it -u abc nas-tvh /usr/share/kodi.proxy/proxy
+docker exec -it -u abc tvheadend /usr/share/kodi.proxy/proxy
 ```
 
 In TvHeadend add a new Automatic IPTV Network and set it's url to
