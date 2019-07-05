@@ -418,15 +418,15 @@ xbmc.executeJSONRPC         = executeJSONRPC
 
 ## xbmcaddon ##
 
-def Addon_init(self, addon_id=None):
-    if not addon_id:
-        addon_id = urlparse.urlsplit(sys.argv[0]).netloc
+def Addon_init(self, id=None):
+    if not id:
+        id = urlparse.urlsplit(sys.argv[0]).netloc
     
     self._info = {
-        'id': addon_id,
-        'name': addon_id,
-        'path': os.path.join(addons_dir, addon_id),
-        'profile': os.path.join(addons_data, addon_id),
+        'id': id,
+        'name': id,
+        'path': os.path.join(addons_dir, id),
+        'profile': os.path.join(addons_data, id),
         'version': '2.0.0',
         'fanart': 'fanart.jpg',
         'icon': 'icon.png',
