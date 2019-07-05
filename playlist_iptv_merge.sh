@@ -2,7 +2,6 @@
 
 SCRIPT_PATH="$( cd "$(dirname "$0")" ; pwd -P )"
 
-OUTPUT="$(PROXY_TYPE=TV_GRAB DEBUG=0 $SCRIPT_PATH/.env/bin/python $SCRIPT_PATH/proxy.py 'plugin://program.iptv.merge/?_=tv_grab')"
-PLAYLIST_PATH="$($SCRIPT_PATH/.env/bin/python $SCRIPT_PATH/proxy.py 'settings://pvr.iptvsimple/m3uPath')"
+PLAYLIST_PATH="$(PROXY_TYPE=TV_GRAB $SCRIPT_PATH/.env/bin/python $SCRIPT_PATH/proxy.py 'plugin://plugin.program.iptv.merge/?_=proxy_merge&type=playlist')"
 
 cat "$PLAYLIST_PATH" | sed -E "s|(^plugin://.*?$)|pipe://$SCRIPT_PATH/tvh.sh \"\1\"|g"

@@ -347,6 +347,7 @@ def translatePath(path):
     translates = {
         'special://home/': kodi_home,
         'special://temp/': temp_dir,
+        'special://userdata/addon_data/': addons_data,
     }
 
     for translate in translates:
@@ -669,8 +670,14 @@ def setResolvedUrl(handle, succeeded, listitem):
         output_tvh(listitem)
     elif PROXY_TYPE == HTTP:
         output_http(listitem)
+    elif PROXY_TYPE == TV_GRAB:
+        output_tv_grab(listitem)
     else:
         output_shell(listitem)
+
+def output_tv_grab(listitem):
+    print(listitem.getPath())
+    sys.exit(200)
 
 def output_http(listitem):
     raise Exception('Replace me!')
