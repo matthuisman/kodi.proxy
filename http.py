@@ -4,8 +4,8 @@ import tornado.web
 
 import proxy
 
-proxy.PROXY_TYPE  = proxy.HTTP
-proxy.INTERACTIVE = False
+proxy.SETTINGS['proxy_type']  = proxy.HTTP
+proxy.SETTINGS['interactive'] = False
 
 
 ##TODAY

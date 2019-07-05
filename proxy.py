@@ -14,30 +14,48 @@ import urllib
 import re
 import requests
 import zipfile
+import ConfigParser
 
 import polib
 import xbmc, xbmcaddon, xbmcgui, xbmcplugin, xbmcvfs
 
 kodi_home   = os.path.dirname(os.path.realpath(__file__))
-venv_dir    = os.path.join(kodi_home, '.env')
-addons_dir  = os.path.join(kodi_home, 'addons')
-addons_data = os.path.join(kodi_home, 'addon_data')
-temp_dir    = os.path.join(kodi_home, 'temp')
+cmd         = os.path.basename(__file__)
 
 TVHEADEND   = 'TVH'
 SHELL       = 'SHELL'
 HTTP        = 'HTTP'
 TV_GRAB     = 'TV_GRAB'
 
-PROXY_TYPE  = os.environ.get('PROXY_TYPE', SHELL)
-DEBUG       = int(os.environ.get('DEBUG', '0'))
-INTERACTIVE = PROXY_TYPE == SHELL
+SETTINGS = {
+    'userdata': kodi_home,
+    'proxy_type': SHELL,
+    'interactive': None,
+    'repo_url': 'http://k.mjh.nz/.repository/{}',
+    'debug': 0,
+}
 
-cmd         = os.path.basename(__file__)
-repo_url    = 'http://k.mjh.nz/.repository/{}'
+config = ConfigParser.RawConfigParser(defaults=SETTINGS)
+config.read(os.path.join(kodi_home, 'config.ini'))
 
-if not os.path.exists(temp_dir):
-    os.makedirs(temp_dir)
+for key in SETTINGS:
+    SETTINGS[key] = os.environ.get(key, config.get('DEFAULT', key))
+
+addons_dir   = os.path.join(SETTINGS['userdata'], 'addons')
+addons_data  = os.path.join(SETTINGS['userdata'], 'addon_data')
+tmp_dir      = os.path.join(SETTINGS['userdata'], 'tmp')
+
+if SETTINGS['interactive'] == None:
+    SETTINGS['interactive'] = SETTINGS['proxy_type'] == SHELL
+
+if not os.path.exists(tmp_dir):
+    os.makedirs(tmp_dir)
+
+if not os.path.exists(addons_dir):
+    os.makedirs(addons_dir)
+
+if not os.path.exists(addons_data):
+    os.makedirs(addons_data)
 
 class ProxyException(Exception):
     pass
@@ -50,7 +68,7 @@ def get_argv(position, default=None):
 
 def get_addons():
     addons = {}
-    url = repo_url.format('addons.xml')
+    url = SETTINGS['repo_url'].format('addons.xml')
     r = requests.get(url)
 
     tree = ET.fromstring(r.content)
@@ -65,7 +83,7 @@ def install(addon_id, version):
     ## then remove all depends in requirements.txt
 
     addon_path = os.path.join(addons_dir, addon_id)
-    url = repo_url.format('/{addon_id}/{addon_id}-{version}.zip'.format(addon_id=addon_id, version=version))
+    url = SETTINGS['repo_url'].format('/{addon_id}/{addon_id}-{version}.zip'.format(addon_id=addon_id, version=version))
     local_filename = os.path.join(addons_dir, addon_id+'.zip')
 
     if os.path.exists(local_filename):
@@ -107,7 +125,7 @@ def menu(url='', module='default'):
     addon_id  = split.netloc.lower()
     cmd       = split.scheme.lower()
     
-    if not cmd and not INTERACTIVE:
+    if not cmd and not SETTINGS['interactive']:
         return
 
     _print("")
@@ -327,7 +345,7 @@ LOG_LABELS = {
 }
 
 def log(msg, level=xbmc.LOGDEBUG):
-    if DEBUG:
+    if SETTINGS['debug']:
         _print('{} - {}'.format(LOG_LABELS[level], msg))
 
 def getInfoLabel(cline):
@@ -349,7 +367,7 @@ def executebuiltin(function, wait=False):
 def translatePath(path):
     translates = {
         'special://home/': kodi_home,
-        'special://temp/': temp_dir,
+        'special://temp/': tmp_dir,
         'special://userdata/addon_data/': addons_data,
     }
 
@@ -489,14 +507,14 @@ xbmcaddon.Addon.getAddonInfo       = Addon_getAddonInfo
 ## xbmcgui ##
 
 def get_input(text, default=''):
-    if INTERACTIVE:
+    if SETTINGS['interactive']:
         return raw_input(text)
     else:
         _print(text)
         return default
 
 def _print(text):
-    if INTERACTIVE or DEBUG:
+    if SETTINGS['interactive'] or SETTINGS['debug']:
         print(text)
 
 def Dialog_yesno(self, heading, line1, line2="", line3="", nolabel="No", yeslabel="Yes", autoclose=0):
@@ -570,7 +588,7 @@ def ListItem_repr(self):
 
 def Window_init(self, existingWindowId=-1):
     self._window_id   = existingWindowId
-    self._window_path = os.path.join(temp_dir, 'window-{}.json'.format(self._window_id))
+    self._window_path = os.path.join(tmp_dir, 'window-{}.json'.format(self._window_id))
 
     try:
         with open(self._window_path) as f:
@@ -645,7 +663,7 @@ def endOfDirectory(handle, succeeded=True, updateListing=False, cacheToDisc=True
     if not succeeded:
         return
 
-    if DEBUG:
+    if SETTINGS['debug']:
         _print('Title: {category}\nContent: {content}'.format(**DATA))
 
     if last_path:
@@ -669,11 +687,11 @@ def endOfDirectory(handle, succeeded=True, updateListing=False, cacheToDisc=True
 def setResolvedUrl(handle, succeeded, listitem):
     log("Resolved: {0}".format(listitem))
 
-    if PROXY_TYPE == TVHEADEND:
+    if SETTINGS['proxy_type'] == TVHEADEND:
         output_tvh(listitem)
-    elif PROXY_TYPE == HTTP:
+    elif SETTINGS['proxy_type'] == HTTP:
         output_http(listitem)
-    elif PROXY_TYPE == TV_GRAB:
+    elif SETTINGS['proxy_type'] == TV_GRAB:
         output_tv_grab(listitem)
     else:
         output_shell(listitem)

@@ -4,7 +4,7 @@ SCRIPT="$(realpath $0)"
 SCRIPT_PATH="$(dirname $SCRIPT)"
 
 DESCRIPTION="tv_grab_iptv_merge (MattHuisman.nz)"
-VERSION="1.1"
+VERSION="1.0"
 
 if [ $# -lt 1 ]; then
     >&2 echo "Running iptv.merge plugin..."
@@ -14,7 +14,7 @@ if [ $# -lt 1 ]; then
     if [ $? -eq 200 ]; then
         cat "$EPG_PATH"
     else
-        >&2 echo "$OUTPUT"
+        >&2 echo "$EPG_PATH"
     fi
 
     exit 0
