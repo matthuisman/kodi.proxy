@@ -166,8 +166,6 @@ def menu(url='', module='default'):
         for addon_id in to_install:
             install(addon_id, addons[addon_id])
 
-        return menu()
-
     elif cmd == 'uninstall':
         if not installed_addons:
             raise ProxyException('No addons installed')
@@ -260,8 +258,6 @@ def menu(url='', module='default'):
             return menu(url='plugin://{}'.format(addon_id))
 
         run(url, module)
-
-    return menu()
 
 start_path   = None
 last_path    = None
