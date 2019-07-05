@@ -189,7 +189,7 @@ def menu(url='', module='default'):
 
         for addon_id in to_uninstall:
             addon_data = os.path.join(addons_data, addon_id)
-            if os.path.exists(addon_data) and int(get_input('{}\n\n0: Keep addon data\n1: Delete addon data\n\nSelect :'.format(addon_id))) == 1:
+            if os.path.exists(addon_data) and int(get_input('{}\n\n0: Keep addon data\n1: Delete addon data\n\nSelect :'.format(addon_id), 0)) == 1:
                 shutil.rmtree(addon_data)
 
             addon_dir = os.path.join(addons_dir, addon_id)
