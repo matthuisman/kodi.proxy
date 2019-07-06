@@ -570,6 +570,9 @@ def ListItem_addContextMenuItems(self, items, replaceItems=False):
 def ListItem_setProperty(self, key, value):
     self._data['property'][key] = value
 
+def ListItem_getProperty(self, key):
+    return self._data['property'].get(key, '')
+
 def ListItem_setPath(self, path):
     self._data['path'] = path
 
@@ -625,6 +628,7 @@ xbmcgui.ListItem.setInfo             = ListItem_setInfo
 xbmcgui.ListItem.addStreamInfo       = ListItem_addStreamInfo
 xbmcgui.ListItem.addContextMenuItems = ListItem_addContextMenuItems
 xbmcgui.ListItem.setProperty         = ListItem_setProperty
+xbmcgui.ListItem.getProperty         = ListItem_getProperty
 xbmcgui.ListItem.setPath             = ListItem_setPath
 xbmcgui.ListItem.getPath             = ListItem_getPath
 xbmcgui.ListItem.__str__             = ListItem_str
@@ -727,10 +731,14 @@ def output_tvh(listitem):
     else:
         url, headers = path, ''
 
-    if name:
-        name = "-metadata service_name='{name}' ".format(name=name)
+    seek = listitem.getProperty('ResumeTime')
+    if seek:
+        seek = '-ss {}'.format(seek)
 
-    print("-loglevel fatal {headers}-i '{url}' -vcodec copy -acodec copy {name}-f mpegts pipe:1".format(headers=headers, url=url, name=name))
+    if name:
+        name = "-metadata service_name='{}'".format(name)
+
+    print("-loglevel fatal {headers} {seek} -i '{url}' {name}".format(headers=headers, seek=seek, url=url, name=name))
     sys.exit(200)
 
 def addSortMethod(handle, sortMethod, label2Mask=""):
