@@ -1,5 +1,7 @@
-arrow==0.14.2
-bs4==0.0.1
+arrow
+bs4
 Kodistubs==18.0.0
-polib==1.1.0
-requests==2.22.0
+polib
+requests
+six
+git+https://github.com/romanvm/kodi.six.git#egg=kodi_six
