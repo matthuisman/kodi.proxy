@@ -399,7 +399,7 @@ def Montor_abortRequested(self):
     aborted = True
 
     return False
-    
+
 def executeJSONRPC(json_string):
     log('JSON RPC Request: {}'.format(json_string))
 
@@ -538,7 +538,7 @@ def Dialog_select(self, heading, list, autoclose=0, preselect=-1, useDetails=Fal
     _print('-1: Cancel')
     
     for idx, item in enumerate(list):
-        print('{}: {}'.format(idx, item.encode('utf-8')))
+        _print('{}: {}'.format(idx, item.encode('utf-8')))
 
     return int(get_input('{}: '.format(heading), preselect))
 
