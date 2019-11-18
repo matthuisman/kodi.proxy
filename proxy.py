@@ -385,13 +385,21 @@ def Player_play(self, item="", listitem=None, windowed=False, startpos=-1):
     _func_print('Play', locals())
 
 def Montor_waitForAbort(self, timeout=0):
-    log("Wait for Abort: {}".format(timeout))
-    time.sleep(1)
+    print("Wait for Abort: {}".format(timeout))
+    #time.sleep(0.01)
     return False
 
+aborted = False
 def Montor_abortRequested(self):
-    return False
+    global aborted
 
+    if aborted:
+        return True
+
+    aborted = True
+
+    return False
+    
 def executeJSONRPC(json_string):
     log('JSON RPC Request: {}'.format(json_string))
 
