@@ -31,7 +31,7 @@ SETTINGS = {
     'userdata': kodi_home,
     'proxy_type': SHELL,
     'interactive': None,
-    'repo_url': 'http://k.mjh.nz/.repository/{}',
+    'repo_url': 'http://k.slyguy.xyz/.repo/{}',
     'debug': 0,
 }
 
