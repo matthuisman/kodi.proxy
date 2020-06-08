@@ -77,13 +77,9 @@ def get_addons():
 
     return addons
 
-def install(addon_id, version):
-    ## Maybe we get add-on dependencies
-    ## then map these to pip modules (or actually download the python module from kodi server)
-    ## then remove all depends in requirements.txt
-
+def install(addon_id):
     addon_path = os.path.join(addons_dir, addon_id)
-    url = SETTINGS['repo_url'].format('/{addon_id}/{addon_id}-{version}.zip'.format(addon_id=addon_id, version=version))
+    url = SETTINGS['repo_url'].format('/{addon_id}/{addon_id}-latest.zip'.format(addon_id=addon_id))
     local_filename = os.path.join(addons_dir, addon_id+'.zip')
 
     if os.path.exists(local_filename):
@@ -107,6 +103,11 @@ def install(addon_id, version):
         if os.path.exists(addon_path+".bu"):
             shutil.move(addon_path+".bu", addon_path)
     else:
+        addon_xml_path = os.path.join(addons_dir, addon_id, 'addon.xml')
+        tree = ET.parse(addon_xml_path)
+        root = tree.getroot()
+        version = root.attrib['version']
+
         _print('{} ({}): Installed'.format(addon_id, version))
         if os.path.exists(addon_path+".bu"):
             shutil.rmtree(addon_path+".bu")
@@ -164,7 +165,7 @@ def menu(url='', module='default'):
             to_install = [addon_id]
 
         for addon_id in to_install:
-            install(addon_id, addons[addon_id])
+            load_dependencies(addon_id, install_missing=True)
 
     elif cmd == 'uninstall':
         if not installed_addons:
@@ -227,7 +228,7 @@ def menu(url='', module='default'):
                 _print('{} ({}): Upto date'.format(addon, version))
                 continue
             
-            install(addon, addons[addon])
+            install(addon)
 
     elif cmd == 'settings':
         if not addon_id:
@@ -252,6 +253,11 @@ def menu(url='', module='default'):
     elif cmd == 'plugin':
         if not addon_id:
             for idx, addon in enumerate(installed_addons):
+                addon_xml_path = os.path.join(addons_dir, addon, 'addon.xml')
+                with open(addon_xml_path) as f:
+                    if 'xbmc.python.pluginsource' not in f.read():
+                        continue
+
                 _print('{}: {}'.format(idx, addon))
 
             addon_id = installed_addons[int(get_input('\nSelect: '))]
@@ -300,6 +306,7 @@ def run(url=None, module='default'):
     _opath = sys.path[:]
     _ocwd = os.getcwd()
 
+    load_dependencies(addon_id)
     sys.path.insert(0, addon_path)
     os.chdir(addon_path)
     
@@ -320,6 +327,34 @@ def run(url=None, module='default'):
     
     sys.path = _opath
     os.chdir(_ocwd)
+
+def load_dependencies(addon_id, optional=False, install_missing=False):
+    addon_xml_path = os.path.join(addons_dir, addon_id, 'addon.xml')
+    if not os.path.exists(addon_xml_path):
+        if optional:
+            return
+
+        if install_missing:
+            install(addon_id)
+        else:
+            raise Exception('Required addon dependency "{}" not installed'.format(addon_id))
+
+    addon_path     = os.path.join(addons_dir, addon_id)
+    addon_xml_path = os.path.join(addon_path, 'addon.xml')
+    if not os.path.exists(addon_xml_path):
+        return
+
+    tree = ET.parse(addon_xml_path)
+    root = tree.getroot()
+    
+    for elem in root.findall("./extension"):
+        if elem.attrib.get('point').lower() == 'xbmc.python.module':
+            path = os.path.normpath(os.path.join(addon_path, elem.attrib['library']))
+            sys.path.insert(0, path)
+
+    for elem in root.findall("./requires/import"):
+        if elem.attrib['addon'] != addon_id:
+            load_dependencies(elem.attrib['addon'], optional=elem.attrib.get('optional', 'false').lower() == 'true', install_missing=install_missing)
 
 def _func_print(name, locals):
     locals.pop('self')
@@ -443,6 +478,11 @@ def Addon_init(self, id=None):
     self._settings = {}
     self._strings  = {}
 
+    self._settings_defaults = {
+        'live_play_type': '1',
+        'default_quality': '5',
+    }
+
     addon_xml_path     = os.path.join(self._info['path'], 'addon.xml')
     settings_path      = os.path.join(self._info['path'], 'resources', 'settings.xml')
     po_path            = os.path.join(self._info['path'], 'resources', 'language', 'resource.language.en_gb', 'strings.po')
@@ -462,7 +502,7 @@ def Addon_init(self, id=None):
         tree = ET.parse(settings_path)
         for elem in tree.findall('*/setting'):
             if 'id' in elem.attrib:
-                self._settings[elem.attrib['id']] = elem.attrib.get('default')
+                self._settings[elem.attrib['id']] = self._settings_defaults.get(elem.attrib['id'], elem.attrib.get('default', ''))
     
     if not os.path.exists(po_path):
         log("WARNING: Missing {}".format(po_path))
@@ -535,11 +575,16 @@ def Dialog_notification(self, heading, message, icon="", time=0, sound=True):
     _func_print('Notification', locals())
 
 def Dialog_select(self, heading, list, autoclose=0, preselect=-1, useDetails=False):
-    _print('-1: Cancel')
-    
-    for idx, item in enumerate(list):
-        _print('{}: {}'.format(idx, item.encode('utf-8')))
+    print('-1: Cancel')
 
+    for idx, item in enumerate(list):
+        try:
+            label = item.getLabel()
+        except:
+            label = item
+
+        _print('{}: {}'.format(idx, label.encode('utf8')))
+        
     return int(get_input('{}: '.format(heading), preselect))
 
 def Dialog_input(self, heading, defaultt="", type=0, option=0, autoclose=0):
