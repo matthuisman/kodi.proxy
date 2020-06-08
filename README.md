@@ -14,5 +14,5 @@ chmod +x tvh.sh
 
 Example TvHeadend URL:
 ```
-pipe:///root/kodi.proxy/tvh.sh "plugin://plugin.video.kayo.sports/?_=play&id=53217&_l=.pvr"
+pipe:///root/kodi.proxy/tvh.sh "plugin://plugin.video.kayo.sports/?_=play&_play=1&id=53208&play_type=2&start_from=0&_l=.pvr"
 ```
