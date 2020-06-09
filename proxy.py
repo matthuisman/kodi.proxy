@@ -388,8 +388,8 @@ def executebuiltin(function, wait=False):
     if function == 'Container.Refresh':
         return run(url=None)
 
-    if function.startswith('XBMC.RunPlugin'):
-        return run(function.replace('XBMC.RunPlugin(', '').rstrip('")'))
+    if function.startswith('RunPlugin'):
+        return run(function.replace('RunPlugin(', '').rstrip('")'))
 
     if function.startswith('Skin.SetString'):
         key, value = function.replace('Skin.SetString(', '').rstrip(')').split(',')
