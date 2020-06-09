@@ -12,11 +12,11 @@ import urlparse
 import imp
 import urllib
 import re
-import requests
 import zipfile
 import ConfigParser
 
 import polib
+import requests
 import xbmc, xbmcaddon, xbmcgui, xbmcplugin, xbmcvfs
 
 kodi_home   = os.path.dirname(os.path.realpath(__file__))
@@ -420,19 +420,14 @@ def Player_play(self, item="", listitem=None, windowed=False, startpos=-1):
     _func_print('Play', locals())
 
 def Montor_waitForAbort(self, timeout=0):
-    print("Wait for Abort: {}".format(timeout))
-    #time.sleep(0.01)
+    log("Wait for Abort: {}".format(timeout))
+
+    try: time.sleep(timeout)
+    except: return True
+
     return False
 
-aborted = False
 def Montor_abortRequested(self):
-    global aborted
-
-    if aborted:
-        return True
-
-    aborted = True
-
     return False
 
 def executeJSONRPC(json_string):
@@ -510,7 +505,7 @@ def Addon_init(self, id=None):
         try:
             po = polib.pofile(po_path)
             for entry in po:
-                self._strings[int(entry.msgctxt.lstrip('#'))] = entry.msgid
+                self._strings[int(entry.msgctxt.lstrip('#'))] = re.sub(r'\[.*?\]', '',entry.msgid)
         except:
             log("WARNING: Failed to parse PO File: {}".format(po_path))
 
@@ -575,7 +570,7 @@ def Dialog_notification(self, heading, message, icon="", time=0, sound=True):
     _func_print('Notification', locals())
 
 def Dialog_select(self, heading, list, autoclose=0, preselect=-1, useDetails=False):
-    print('-1: Cancel')
+    _print('-1: Cancel')
 
     for idx, item in enumerate(list):
         try:
@@ -591,7 +586,7 @@ def Dialog_input(self, heading, defaultt="", type=0, option=0, autoclose=0):
     return get_input('{0} ({1}): '.format(heading, defaultt)).strip() or defaultt
 
 def DialogProgress_create(self, heading, line1="", line2="", line3=""):
-    _print('Progress: {} {} {} {}'.format(heading, line1, line2, line3))
+    _print('{}\n{} {} {}'.format(heading, line1, line2, line3))
 
 def Dialog_browseSingle(self, type, heading, shares, mask='', useThumbs=False, treatAsFolder=False, defaultt=''):
     return get_input('{0} ({1}): '.format(heading, defaultt)).strip() or defaultt

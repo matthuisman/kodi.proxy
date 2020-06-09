@@ -1,7 +1,3 @@
-arrow
-bs4
-Kodistubs==18.0.0
 polib
 requests
-six
-git+https://github.com/romanvm/kodi.six.git#egg=kodi_six
+git+git://github.com/matthuisman/Kodistubs.git@py2#egg=Kodistubs
