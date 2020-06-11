@@ -31,7 +31,7 @@ SETTINGS = {
     'userdata': kodi_home,
     'proxy_type': SHELL,
     'interactive': None,
-    'repo_url': 'http://k.slyguy.xyz/.repo/{}',
+    'repo_url': 'http://k.slyguy.xyz/.repo',
     'debug': 0,
 }
 
@@ -68,7 +68,7 @@ def get_argv(position, default=None):
 
 def get_addons():
     addons = {}
-    url = SETTINGS['repo_url'].format('addons.xml')
+    url = SETTINGS['repo_url'] + '/addons.xml'
     r = requests.get(url)
 
     tree = ET.fromstring(r.content)
@@ -79,7 +79,7 @@ def get_addons():
 
 def install(addon_id):
     addon_path = os.path.join(addons_dir, addon_id)
-    url = SETTINGS['repo_url'].format('/{addon_id}/{addon_id}-latest.zip'.format(addon_id=addon_id))
+    url = SETTINGS['repo_url'] + '/{addon_id}/{addon_id}-latest.zip'.format(addon_id=addon_id)
     local_filename = os.path.join(addons_dir, addon_id+'.zip')
 
     if os.path.exists(local_filename):
