@@ -826,10 +826,19 @@ def mkdirs(path):
 def delete(file):
     return os.remove(file)
 
-xbmcvfs.exists = exists
-xbmcvfs.mkdir  = mkdir
-xbmcvfs.mkdirs = mkdirs
-xbmcvfs.delete = delete
+def listdir(path):
+    if path.startswith('plugin://'):
+        run(path)
+        items = [x[1].getPath() for x in DATA['items'][1:]]
+        return [], items
+    else:
+        return [], os.listdir(path)
+
+xbmcvfs.exists  = exists
+xbmcvfs.mkdir   = mkdir
+xbmcvfs.mkdirs  = mkdirs
+xbmcvfs.delete  = delete
+xbmcvfs.listdir = listdir
 
 if __name__ == "__main__":
     try:
