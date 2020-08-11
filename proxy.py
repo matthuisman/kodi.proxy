@@ -828,7 +828,7 @@ def delete(file):
 
 def listdir(path):
     if path.startswith('plugin://'):
-        run(path)
+        run(urllib.unquote(path))
         items = [x[1].getPath() for x in DATA['items'][1:]]
         return [], items
     else:
