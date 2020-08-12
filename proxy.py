@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import print_function
 import os
 import sys
 import time
@@ -280,13 +281,18 @@ def menu(url='', module='default'):
             return menu(url='plugin://{}'.format(addon_id))
 
         run(url, module)
+        while next_path:
+            run(next_path, module)
 
 start_path   = None
 last_path    = None
 current_path = None
+next_path    = None
 
 def run(url=None, module='default'):
-    global last_path, current_path, start_path
+    global last_path, current_path, start_path, next_path
+
+    next_path = None
 
     url        = url or get_argv(0, '')
     split      = urlparse.urlsplit(url)
@@ -400,15 +406,16 @@ def getInfoLabel(cline):
 
 def executebuiltin(function, wait=False):
     log("XBMC Builtin: {}".format(function))
+    global next_path
 
     if function == 'Container.Refresh':
-        return run(url=None)
-
-    if function.startswith('RunPlugin'):
+        next_path = last_path
+ 
+    elif function.startswith('RunPlugin'):
         path = function.replace('RunPlugin(', '').rstrip('")')
         run_plugin(path, wait=False)
 
-    if function.startswith('Skin.SetString'):
+    elif function.startswith('Skin.SetString'):
         key, value = function.replace('Skin.SetString(', '').rstrip(')').split(',')
         INFO_LABELS['Skin.String({})'.format(key)] = value
 
@@ -572,8 +579,10 @@ def get_input(text, default=''):
         return default
 
 def _print(text):
-    if SETTINGS['interactive'] or SETTINGS['debug']:
-        print(text)
+    print(text, file=sys.stderr)
+
+    # if SETTINGS['interactive'] or SETTINGS['debug']:
+    #     print(text)
 
 def Dialog_yesno(self, heading, line1, line2="", line3="", nolabel="No", yeslabel="Yes", autoclose=0):
     _print("{}\n{} {} {}\n0: {}\n1: {}".format(heading, line1, line2, line3, nolabel, yeslabel))
@@ -725,7 +734,7 @@ def addDirectoryItems(handle, items, totalItems=0):
     return True
 
 def endOfDirectory(handle, succeeded=True, updateListing=False, cacheToDisc=True):
-    global DATA, last_path
+    global DATA, last_path, next_path
 
     if SETTINGS['proxy_type'] == KODI:
         for item in DATA['items']:
@@ -755,7 +764,7 @@ def endOfDirectory(handle, succeeded=True, updateListing=False, cacheToDisc=True
         selected = DATA['items'][index]
         url = selected[0]
         DATA = _init_data()
-        run(url)
+        next_path = url
 
 def setResolvedUrl(handle, succeeded, listitem):
     log("Resolved: {0}".format(listitem))
