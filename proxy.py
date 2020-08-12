@@ -6,7 +6,7 @@ import io
 import json
 import shutil
 import traceback
-from collections import defaultdict
+import subprocess
 import xml.etree.ElementTree as ET
 import urlparse
 import imp
@@ -14,6 +14,8 @@ import urllib
 import re
 import zipfile
 import ConfigParser
+import threading
+from collections import defaultdict
 
 import polib
 import requests
@@ -26,6 +28,7 @@ TVHEADEND   = 'TVH'
 SHELL       = 'SHELL'
 HTTP        = 'HTTP'
 TV_GRAB     = 'TV_GRAB'
+KODI        = 'KODI'
 
 SETTINGS = {
     'userdata': kodi_home,
@@ -59,6 +62,19 @@ if not os.path.exists(addons_data):
 
 class ProxyException(Exception):
     pass
+
+def run_plugin(path, wait=True):
+    def run():
+        return subprocess.check_output([sys.executable, os.path.join(kodi_home, cmd), path], env={'proxy_type': KODI}).split('\n')
+
+    if wait:
+        return run()
+
+    thread = threading.Thread(target=run)
+    thread.daemon = True
+    thread.start()
+    
+    return thread
 
 def get_argv(position, default=None):
     try:
@@ -389,7 +405,8 @@ def executebuiltin(function, wait=False):
         return run(url=None)
 
     if function.startswith('RunPlugin'):
-        return run(function.replace('RunPlugin(', '').rstrip('")'))
+        path = function.replace('RunPlugin(', '').rstrip('")')
+        run_plugin(path, wait=False)
 
     if function.startswith('Skin.SetString'):
         key, value = function.replace('Skin.SetString(', '').rstrip(')').split(',')
@@ -710,6 +727,12 @@ def addDirectoryItems(handle, items, totalItems=0):
 def endOfDirectory(handle, succeeded=True, updateListing=False, cacheToDisc=True):
     global DATA, last_path
 
+    if SETTINGS['proxy_type'] == KODI:
+        for item in DATA['items']:
+            print(item[0])
+
+        return
+
     if not succeeded:
         return
 
@@ -811,7 +834,6 @@ xbmcplugin.addSortMethod     = addSortMethod
 xbmcplugin.setContent        = setContent
 xbmcplugin.setPluginCategory = setPluginCategory
 
-
 ## xbmcvfs ##
 
 def exists(path):
@@ -828,9 +850,8 @@ def delete(file):
 
 def listdir(path):
     if path.startswith('plugin://'):
-        run(urllib.unquote(path))
-        items = [x[1].getPath() for x in DATA['items'][1:]]
-        return [], items
+        output = run_plugin(urllib.unquote(path))
+        return [], [x for x in output if x]
     else:
         return [], os.listdir(path)
 
