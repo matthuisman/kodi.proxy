@@ -39,3 +39,22 @@ Enable the below EPG Grabber
 ```
 XMLTV: tv_grab_iptv_merge (MattHuisman.nz)
 ```
+
+## Drop-in replacement for linuxserver/tvheadend
+
+Replace:
+```
+tvheadend:
+  image: linuxserver/tvheadend
+```
+with:
+```
+tvheadend:
+  build:
+    context: https://github.com/matthuisman/kodi.proxy.git#:docker
+```
+
+Build and run using the Dockerfile in this repository:
+```
+docker-compose up -d tvheadend
+```
