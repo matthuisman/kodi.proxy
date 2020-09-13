@@ -1,6 +1,6 @@
 FROM linuxserver/tvheadend
 
-RUN apk add --no-cache py-virtualenv wget
+RUN apk add --no-cache py-virtualenv wget git
 
 RUN cd /usr/share \
     && wget -O proxy.tar.gz https://codeload.github.com/matthuisman/kodi.proxy/tar.gz/master \
