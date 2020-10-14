@@ -96,7 +96,7 @@ def get_addons():
 
 def install(addon_id):
     addon_path = os.path.join(addons_dir, addon_id)
-    url = SETTINGS['repo_url'] + '/{addon_id}/{addon_id}-latest.zip'.format(addon_id=addon_id)
+    url = SETTINGS['repo_url'] + '/{addon_id}/source.zip'.format(addon_id=addon_id)
     local_filename = os.path.join(addons_dir, addon_id+'.zip')
 
     if os.path.exists(local_filename):
@@ -132,7 +132,7 @@ def install(addon_id):
         os.remove(local_filename)
 
 def _get_installed_addons():
-    return [f for f in os.listdir(addons_dir) if os.path.isdir(os.path.join(addons_dir, f))]
+    return [f for f in os.listdir(addons_dir) if os.path.exists(os.path.join(addons_dir, f, 'addon.xml'))]
 
 def menu(url='', module='default'):
     cmds = ['install', 'uninstall', 'update', 'plugin', 'settings']
