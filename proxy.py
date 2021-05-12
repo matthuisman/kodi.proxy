@@ -66,7 +66,9 @@ class ProxyException(Exception):
 
 def run_plugin(path, wait=True):
     def run():
-        return subprocess.check_output([sys.executable, os.path.join(kodi_home, cmd), path], env={'proxy_type': KODI}).split('\n')
+        env_mapper = os.environ.copy()
+        env_mapper.update({'proxy_type': KODI})
+        return subprocess.check_output([sys.executable, os.path.join(kodi_home, cmd), path], env=env_mapper).split('\n')
 
     if wait:
         return run()
@@ -74,7 +76,7 @@ def run_plugin(path, wait=True):
     thread = threading.Thread(target=run)
     thread.daemon = True
     thread.start()
-    
+
     return thread
 
 def get_argv(position, default=None):
@@ -142,7 +144,7 @@ def menu(url='', module='default'):
     split     = urlparse.urlsplit(url)
     addon_id  = split.netloc.lower()
     cmd       = split.scheme.lower()
-    
+
     if not cmd and not SETTINGS['interactive']:
         return
 
@@ -160,11 +162,11 @@ def menu(url='', module='default'):
 
     if cmd == 'install':
         addons = get_addons()
-        
+
         if not addon_id:
             options = addons.keys()
             options.insert(0, 'all')
-    
+
             for idx, addon in enumerate(options):
                 if addon in installed_addons:
                     addon += ' [INSTALLED]'
@@ -240,11 +242,11 @@ def menu(url='', module='default'):
             tree = ET.parse(addon_xml_path)
             root = tree.getroot()
             version = root.attrib['version']
- 
+
             if version == addons[addon]:
                 _print('{} ({}): Upto date'.format(addon, version))
                 continue
-            
+
             install(addon)
 
     elif cmd == 'settings':
@@ -331,7 +333,7 @@ def run(url=None, module='default'):
     load_dependencies(addon_id)
     sys.path.insert(0, addon_path)
     os.chdir(addon_path)
-    
+
     log("Calling {} {} {}".format(addon_id, module, sys.argv))
 
     f, filename, description = imp.find_module(addon_id, [addons_dir])
@@ -346,7 +348,7 @@ def run(url=None, module='default'):
         f.close()
 
     log("**** time: {0:.3f} s *****\n".format(time.time() - start))
-    
+
     sys.path = _opath
     os.chdir(_ocwd)
 
@@ -368,7 +370,7 @@ def load_dependencies(addon_id, optional=False, install_missing=False):
 
     tree = ET.parse(addon_xml_path)
     root = tree.getroot()
-    
+
     for elem in root.findall("./extension"):
         if elem.attrib.get('point').lower() == 'xbmc.python.module':
             path = os.path.normpath(os.path.join(addon_path, elem.attrib['library']))
@@ -410,7 +412,7 @@ def executebuiltin(function, wait=False):
 
     if function == 'Container.Refresh':
         next_path = last_path
- 
+
     elif function.startswith('RunPlugin'):
         path = function.replace('RunPlugin(', '').rstrip('")')
         run_plugin(path, wait=False)
@@ -464,7 +466,7 @@ def executeJSONRPC(json_string):
         addons = _get_installed_addons()
         rows   = [{'addonid': addon} for addon in addons]
         result = {'result': {'addons': rows}}
-    
+
     return json.dumps(result)
 
 xbmc.log                    = log
@@ -483,7 +485,7 @@ xbmc.executeJSONRPC         = executeJSONRPC
 def Addon_init(self, id=None):
     if not id:
         id = urlparse.urlsplit(sys.argv[0]).netloc
-    
+
     self._info = {
         'id': id,
         'name': id,
@@ -524,7 +526,7 @@ def Addon_init(self, id=None):
         for elem in tree.findall('*/setting'):
             if 'id' in elem.attrib:
                 self._settings[elem.attrib['id']] = self._settings_defaults.get(elem.attrib['id'], elem.attrib.get('default', ''))
-    
+
     if not os.path.exists(po_path):
         log("WARNING: Missing {}".format(po_path))
     else:
@@ -607,7 +609,7 @@ def Dialog_select(self, heading, list, autoclose=0, preselect=-1, useDetails=Fal
             label = item
 
         _print('{}: {}'.format(idx, label.encode('utf8')))
-        
+
     return int(get_input('{}: '.format(heading), preselect))
 
 def Dialog_input(self, heading, defaultt="", type=0, option=0, autoclose=0):
@@ -719,7 +721,7 @@ xbmcgui.Window.save                  = Window_save
 ## xbmcplugin ##
 def _init_data():
     return {'items': [], 'sort': [], 'content': '', 'category': ''}
-    
+
 DATA = _init_data()
 
 def addDirectoryItem(handle, url, listitem, isFolder=False, totalItems=0):
@@ -741,6 +743,11 @@ def endOfDirectory(handle, succeeded=True, updateListing=False, cacheToDisc=True
             print(item[0])
 
         return
+
+    elif SETTINGS['proxy_type'] == TV_GRAB:
+        for item in DATA['items']:
+            print(urllib.unquote(item[0]))
+        sys.exit(200)
 
     if not succeeded:
         return
