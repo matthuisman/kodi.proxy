@@ -92,7 +92,7 @@ def get_addons():
 
     tree = ET.fromstring(r.content)
     for elem in tree.findall('addon'):
-        addons[elem.attrib['id']] = elem.attrib['version']
+        addons[elem.attrib['id']] = [elem.attrib['version'], elem.attrib['name']]
 
     return addons
 
@@ -164,19 +164,23 @@ def menu(url='', module='default'):
         addons = get_addons()
 
         if not addon_id:
-            options = addons.keys()
-            options.insert(0, 'all')
+            _print('{}: {}'.format(0, 'ALL'))
 
-            for idx, addon in enumerate(options):
-                if addon in installed_addons:
-                    addon += ' [INSTALLED]'
+            options = ['ALL']
 
-                _print('{}: {}'.format(idx, addon))
+            for idx, addon_id in enumerate(sorted(addons, key=lambda x: addons[x][1].lower()), start=1):
+                addon = addons[addon_id]
+                label = addon[1]
+                options.append(addon_id)
+                if addon_id in installed_addons:
+                    label += ' [INSTALLED]'
+
+                _print('{}: {}'.format(idx, label))
 
             addon_id = options[int(get_input('\nSelect: '))]
             return menu(url='install://{}'.format(addon_id))
 
-        if addon_id == 'all':
+        if addon_id == 'ALL':
             to_install = addons.keys()
         elif addon_id in installed_addons:
             raise ProxyException('{} already installed'.format(addon_id))
@@ -243,7 +247,7 @@ def menu(url='', module='default'):
             root = tree.getroot()
             version = root.attrib['version']
 
-            if version == addons[addon]:
+            if version == addons[addon][0]:
                 _print('{} ({}): Upto date'.format(addon, version))
                 continue
 
@@ -387,7 +391,7 @@ def _func_print(name, locals):
 ## xbmc ##
 
 INFO_LABELS = {
-    'System.BuildVersion': '18.0.1',
+    'System.BuildVersion': '19.2',
 }
 
 LOG_LABELS = {
