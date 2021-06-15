@@ -502,8 +502,10 @@ def Addon_init(self, id=None):
     self._settings_defaults = {
         'live_play_type': '1',
         'default_quality': '5',
-        'proxy_enabled': 'false',
         'persist_cache': 'false',
+        'use_ia_hls_live': 'false',
+        'use_ia_hls_vod': 'false',
+        '_proxy_path': '',
     }
 
     addon_xml_path     = os.path.join(self._info['path'], 'addon.xml')
