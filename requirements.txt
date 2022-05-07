@@ -1,3 +1,3 @@
-polib
 requests
-git+git://github.com/matthuisman/Kodistubs.git@py2#egg=Kodistubs
+git+https://github.com/matthuisman/polib.git@master#egg=polib
+git+https://github.com/matthuisman/Kodistubs.git@master#egg=Kodistubs

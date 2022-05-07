@@ -1,22 +1,20 @@
-#!/usr/bin/env python
 from __future__ import print_function
+from operator import mod
 import os
 import sys
 import time
 import io
 import json
 import shutil
-import traceback
 import subprocess
 import xml.etree.ElementTree as ET
-import urlparse
-import imp
 import urllib
 import re
 import zipfile
-import ConfigParser
+import configparser
 import threading
 from collections import defaultdict
+from urllib.parse import urlsplit, unquote_plus, quote_plus, parse_qsl
 
 import polib
 import requests
@@ -39,7 +37,7 @@ SETTINGS = {
     'debug': 0,
 }
 
-config = ConfigParser.RawConfigParser(defaults=SETTINGS)
+config = configparser.RawConfigParser(defaults=SETTINGS)
 config.read(os.path.join(kodi_home, 'config.ini'))
 
 for key in SETTINGS:
@@ -68,7 +66,7 @@ def run_plugin(path, wait=True):
     def run():
         env_mapper = os.environ.copy()
         env_mapper.update({'proxy_type': KODI})
-        return subprocess.check_output([sys.executable, os.path.join(kodi_home, cmd), path], env=env_mapper).split('\n')
+        return subprocess.check_output([sys.executable, os.path.join(kodi_home, cmd), path], env=env_mapper).decode('utf-8').split('\n')
 
     if wait:
         return run()
@@ -141,7 +139,7 @@ def menu(url='', module='default'):
 
     installed_addons = _get_installed_addons()
 
-    split     = urlparse.urlsplit(url)
+    split     = urlsplit(url)
     addon_id  = split.netloc.lower()
     cmd       = split.scheme.lower()
 
@@ -301,12 +299,18 @@ def run(url=None, module='default'):
     next_path = None
 
     url        = url or get_argv(0, '')
-    split      = urlparse.urlsplit(url)
+    split      = urlsplit(url)
     addon_id   = split.netloc or os.path.basename(os.getcwd())
 
     addon_path = os.path.join(addons_dir, addon_id)
-    fragment   = urllib.quote(split.fragment, ':&=') if split.fragment else ''
-    query      = urllib.quote(split.query, ':&=') if split.query else ''
+    fragment   = quote_plus(split.fragment, ':&=') if split.fragment else ''
+    query      = quote_plus(split.query, ':&=') if split.query else ''
+    filename   = module + '.py'
+    file_path  = os.path.join(addon_path, filename)
+
+    if not os.path.exists(file_path):
+        filename = 'default.py'
+        file_path = os.path.join(addon_path, filename)
 
     if query and fragment:
         query = '?' + query + '%23' + fragment
@@ -340,18 +344,9 @@ def run(url=None, module='default'):
 
     log("Calling {} {} {}".format(addon_id, module, sys.argv))
 
-    f, filename, description = imp.find_module(addon_id, [addons_dir])
-    package = imp.load_module(addon_id, f, filename, description)
-
-    f, filename, description = imp.find_module(module, package.__path__)
-
     start = time.time()
-    try:
-        module = imp.load_module('{}.{}'.format(addon_id, module), f, filename, description)
-    finally:
-        f.close()
-
-    log("**** time: {0:.3f} s *****\n".format(time.time() - start))
+    exec(open(file_path, encoding="utf-8").read(), dict(__file__=file_path))
+    print("**** time: {0:.3f} s *****\n".format(time.time() - start))
 
     sys.path = _opath
     os.chdir(_ocwd)
@@ -476,19 +471,19 @@ def executeJSONRPC(json_string):
 xbmc.log                    = log
 xbmc.getInfoLabel           = getInfoLabel
 xbmc.executebuiltin         = executebuiltin
-xbmc.translatePath          = translatePath
 xbmc.getCondVisibility      = getCondVisibility
 xbmc.Player.play            = Player_play
 xbmc.Monitor.waitForAbort   = Montor_waitForAbort
 xbmc.Monitor.abortRequested = Montor_abortRequested
 xbmc.getLanguage            = getLanguage
 xbmc.executeJSONRPC         = executeJSONRPC
+xbmcvfs.translatePath = xbmc.translatePath = translatePath
 
 ## xbmcaddon ##
 
 def Addon_init(self, id=None):
     if not id:
-        id = urlparse.urlsplit(sys.argv[0]).netloc
+        id = urlsplit(sys.argv[0]).netloc
 
     self._info = {
         'id': id,
@@ -543,9 +538,16 @@ def Addon_init(self, id=None):
         except:
             log("WARNING: Failed to parse PO File: {}".format(po_path))
 
+    settings_json_path = os.path.join(self._info['profile'], 'settings.json')
     if os.path.exists(settings_json_path):
-        with io.open(settings_json_path, 'r', encoding='utf-8') as f:
-            self._settings.update(json.loads(f.read()))
+        with open(os.path.join(self._info['profile'], 'settings.json'), 'rb') as f:
+            self._settings.update(json.load(f))
+
+    if not os.path.exists(self._info['profile']):
+        os.makedirs(self._info['profile'])
+
+    with open(os.path.join(self._info['profile'], 'settings.json'), 'w', encoding='utf-8') as f:
+        json.dump(self._settings, f, indent=4, separators=(',', ': '), sort_keys=True, ensure_ascii=False)
 
 def Addon_getLocalizedString(self, id):
     return self._strings.get(id, '')
@@ -564,8 +566,10 @@ def Addon_setSetting(self, id, value):
     if not os.path.exists(self._info['profile']):
         os.makedirs(self._info['profile'])
 
-    with io.open(os.path.join(self._info['profile'], 'settings.json'), 'w', encoding='utf8') as f:
-        f.write(unicode(json.dumps(self._settings, indent=4, separators=(',', ': '), sort_keys=True, ensure_ascii=False)))
+    time.sleep(0.01)
+
+    with open(os.path.join(self._info['profile'], 'settings.json'), 'w', encoding='utf-8') as f:
+        json.dump(self._settings, f, indent=4, separators=(',', ': '), sort_keys=True, ensure_ascii=False)
 
 def Addon_getAddonInfo(self, id):
     return self._info.get(id, "")
@@ -581,7 +585,7 @@ xbmcaddon.Addon.getAddonInfo       = Addon_getAddonInfo
 
 def get_input(text, default=''):
     if SETTINGS['interactive']:
-        return raw_input(text)
+        return input(text)
     else:
         _print(text)
         return default
@@ -614,7 +618,7 @@ def Dialog_select(self, heading, list, autoclose=0, preselect=-1, useDetails=Fal
         except:
             label = item
 
-        _print('{}: {}'.format(idx, label.encode('utf8')))
+        _print('{}: {}'.format(idx, label))
 
     return int(get_input('{}: '.format(heading), preselect))
 
@@ -637,7 +641,7 @@ def ListItem_setLabel(self, label):
     self._data['label'] = label
 
 def ListItem_getLabel(self):
-    return self._data.get('label', '').encode('utf-8')
+    return self._data.get('label', '')
 
 def ListItem_setArt(self, dictionary):
     self._data['art'] = dictionary
@@ -752,7 +756,7 @@ def endOfDirectory(handle, succeeded=True, updateListing=False, cacheToDisc=True
 
     elif SETTINGS['proxy_type'] == TV_GRAB:
         for item in DATA['items']:
-            print(urllib.unquote(item[0]))
+            print(unquote_plus(item[0]))
         sys.exit(200)
 
     if not succeeded:
@@ -816,7 +820,7 @@ def output_tvh(listitem):
     if '|' in path:
         url, headers = path.split('|')
 
-        _headers = urlparse.parse_qsl(headers)
+        _headers = parse_qsl(headers)
 
         headers = "-headers '"
         for pair in _headers:
@@ -872,7 +876,7 @@ def delete(file):
 
 def listdir(path):
     if path.startswith('plugin://'):
-        output = run_plugin(urllib.unquote(path))
+        output = run_plugin(unquote_plus(path))
         return [], [x for x in output if x]
     else:
         return [], os.listdir(path)
