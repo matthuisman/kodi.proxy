@@ -1,14 +1,11 @@
 from __future__ import print_function
-from operator import mod
 import os
 import sys
 import time
-import io
 import json
 import shutil
 import subprocess
 import xml.etree.ElementTree as ET
-import urllib
 import re
 import zipfile
 import configparser
