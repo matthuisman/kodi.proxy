@@ -537,8 +537,11 @@ def Addon_init(self, id=None):
 
     settings_json_path = os.path.join(self._info['profile'], 'settings.json')
     if os.path.exists(settings_json_path):
-        with open(os.path.join(self._info['profile'], 'settings.json'), 'rb') as f:
-            self._settings.update(json.load(f))
+        try:
+            with open(os.path.join(self._info['profile'], 'settings.json'), 'rb') as f:
+                self._settings.update(json.load(f))
+        except:
+            print("Failed to loat settings.json")
 
     if not os.path.exists(self._info['profile']):
         os.makedirs(self._info['profile'])
