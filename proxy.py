@@ -17,14 +17,14 @@ import polib
 import requests
 import xbmc, xbmcaddon, xbmcgui, xbmcplugin, xbmcvfs
 
-kodi_home   = os.path.dirname(os.path.realpath(__file__))
-cmd         = os.path.basename(__file__)
+kodi_home = os.path.dirname(os.path.realpath(__file__))
+cmd = os.path.basename(__file__)
 
-TVHEADEND   = 'TVH'
-SHELL       = 'SHELL'
-HTTP        = 'HTTP'
-TV_GRAB     = 'TV_GRAB'
-KODI        = 'KODI'
+TVHEADEND = 'TVH'
+SHELL = 'SHELL'
+HTTP = 'HTTP'
+TV_GRAB = 'TV_GRAB'
+KODI = 'KODI'
 
 SETTINGS = {
     'userdata': kodi_home,
@@ -40,9 +40,9 @@ config.read(os.path.join(kodi_home, 'config.ini'))
 for key in SETTINGS:
     SETTINGS[key] = os.environ.get(key, config.get('DEFAULT', key))
 
-addons_dir   = os.path.join(SETTINGS['userdata'], 'addons')
-addons_data  = os.path.join(SETTINGS['userdata'], 'addon_data')
-tmp_dir      = os.path.join(SETTINGS['userdata'], 'tmp')
+addons_dir = os.path.join(SETTINGS['userdata'], 'addons')
+addons_data = os.path.join(SETTINGS['userdata'], 'addon_data')
+tmp_dir = os.path.join(SETTINGS['userdata'], 'tmp')
 
 if SETTINGS['interactive'] == None:
     SETTINGS['interactive'] = SETTINGS['proxy_type'] == SHELL
@@ -136,9 +136,9 @@ def menu(url='', module='default'):
 
     installed_addons = _get_installed_addons()
 
-    split     = urlsplit(url)
-    addon_id  = split.netloc.lower()
-    cmd       = split.scheme.lower()
+    split = urlsplit(url)
+    addon_id = split.netloc.lower()
+    cmd = split.scheme.lower()
 
     if not cmd and not SETTINGS['interactive']:
         return
@@ -256,7 +256,7 @@ def menu(url='', module='default'):
             addon_id = installed_addons[int(get_input('\nSelect: '))]
             return menu(url='settings://{}'.format(addon_id))
 
-        key   = None #need to parse from url
+        key = None #need to parse from url
         value = None #need to parse from url
 
         addon = xbmcaddon.Addon(addon_id)
@@ -285,25 +285,25 @@ def menu(url='', module='default'):
         while next_path:
             run(next_path, module)
 
-start_path   = None
-last_path    = None
+start_path = None
+last_path = None
 current_path = None
-next_path    = None
+next_path = None
 
 def run(url=None, module='default'):
     global last_path, current_path, start_path, next_path
 
     next_path = None
 
-    url        = url or get_argv(0, '')
-    split      = urlsplit(url)
-    addon_id   = split.netloc or os.path.basename(os.getcwd())
+    url = url or get_argv(0, '')
+    split = urlsplit(url)
+    addon_id = split.netloc or os.path.basename(os.getcwd())
 
     addon_path = os.path.join(addons_dir, addon_id)
-    fragment   = quote_plus(split.fragment, ':&=') if split.fragment else ''
-    query      = quote_plus(split.query, ':&=') if split.query else ''
-    filename   = module + '.py'
-    file_path  = os.path.join(addon_path, filename)
+    fragment = quote_plus(split.fragment, ':&=') if split.fragment else ''
+    query = quote_plus(split.query, ':&=') if split.query else ''
+    filename = module + '.py'
+    file_path = os.path.join(addon_path, filename)
 
     if not os.path.exists(file_path):
         filename = 'default.py'
@@ -359,7 +359,7 @@ def load_dependencies(addon_id, optional=False, install_missing=False):
         else:
             raise Exception('Required addon dependency "{}" not installed'.format(addon_id))
 
-    addon_path     = os.path.join(addons_dir, addon_id)
+    addon_path = os.path.join(addons_dir, addon_id)
     addon_xml_path = os.path.join(addon_path, 'addon.xml')
     if not os.path.exists(addon_xml_path):
         return
@@ -441,39 +441,46 @@ def getLanguage(format):
 def Player_play(self, item="", listitem=None, windowed=False, startpos=-1):
     _func_print('Play', locals())
 
+ABORTED = False
 def Montor_waitForAbort(self, timeout=0):
+    global ABORTED
     log("Wait for Abort: {}".format(timeout))
 
-    try: time.sleep(timeout)
-    except: return True
+    try:
+        for i in range(timeout):
+            if ABORTED:
+                break
+            time.sleep(1)
+    except:
+        ABORTED = True
 
-    return False
+    return ABORTED
 
 def Montor_abortRequested(self):
-    return False
+    return ABORTED
 
 def executeJSONRPC(json_string):
     log('JSON RPC Request: {}'.format(json_string))
 
     request = json.loads(json_string)
-    result  = {}
+    result = {}
 
     if request['method'] == 'Addons.GetAddons':
         addons = _get_installed_addons()
-        rows   = [{'addonid': addon} for addon in addons]
+        rows = [{'addonid': addon} for addon in addons]
         result = {'result': {'addons': rows}}
 
     return json.dumps(result)
 
-xbmc.log                    = log
-xbmc.getInfoLabel           = getInfoLabel
-xbmc.executebuiltin         = executebuiltin
-xbmc.getCondVisibility      = getCondVisibility
-xbmc.Player.play            = Player_play
-xbmc.Monitor.waitForAbort   = Montor_waitForAbort
+xbmc.log = log
+xbmc.getInfoLabel = getInfoLabel
+xbmc.executebuiltin = executebuiltin
+xbmc.getCondVisibility = getCondVisibility
+xbmc.Player.play = Player_play
+xbmc.Monitor.waitForAbort = Montor_waitForAbort
 xbmc.Monitor.abortRequested = Montor_abortRequested
-xbmc.getLanguage            = getLanguage
-xbmc.executeJSONRPC         = executeJSONRPC
+xbmc.getLanguage = getLanguage
+xbmc.executeJSONRPC = executeJSONRPC
 xbmcvfs.translatePath = xbmc.translatePath = translatePath
 
 ## xbmcaddon ##
@@ -496,17 +503,17 @@ def Addon_init(self, id=None):
     self._strings  = {}
 
     self._settings_defaults = {
-        'live_play_type': '1',
-        'default_quality': '5',
+        'live_play_type': '1', #From live
+        'default_quality': '1', #Best
         'persist_cache': 'false',
         'use_ia_hls_live': 'false',
         'use_ia_hls_vod': 'false',
-        '_proxy_path': '',
+        '_proxy_path': '', #start with: proxy.py "plugin://script.module.slyguy" service
     }
 
-    addon_xml_path     = os.path.join(self._info['path'], 'addon.xml')
-    settings_path      = os.path.join(self._info['path'], 'resources', 'settings.xml')
-    po_path            = os.path.join(self._info['path'], 'resources', 'language', 'resource.language.en_gb', 'strings.po')
+    addon_xml_path = os.path.join(self._info['path'], 'addon.xml')
+    settings_path = os.path.join(self._info['path'], 'resources', 'settings.xml')
+    po_path = os.path.join(self._info['path'], 'resources', 'language', 'resource.language.en_gb', 'strings.po')
     settings_json_path = os.path.join(self._info['profile'], 'settings.json')
 
     if not os.path.exists(addon_xml_path):
@@ -574,12 +581,12 @@ def Addon_setSetting(self, id, value):
 def Addon_getAddonInfo(self, id):
     return self._info.get(id, "")
 
-xbmcaddon.Addon.__init__           = Addon_init
+xbmcaddon.Addon.__init__ = Addon_init
 xbmcaddon.Addon.getLocalizedString = Addon_getLocalizedString
-xbmcaddon.Addon.openSettings       = Addon_openSettings
-xbmcaddon.Addon.getSetting         = Addon_getSetting
-xbmcaddon.Addon.setSetting         = Addon_setSetting
-xbmcaddon.Addon.getAddonInfo       = Addon_getAddonInfo
+xbmcaddon.Addon.openSettings = Addon_openSettings
+xbmcaddon.Addon.getSetting = Addon_getSetting
+xbmcaddon.Addon.setSetting = Addon_setSetting
+xbmcaddon.Addon.getAddonInfo = Addon_getAddonInfo
 
 ## xbmcgui ##
 
@@ -698,35 +705,35 @@ def Window_save(self):
     with open(self._window_path, 'w') as f:
         f.write(json.dumps(self._win_data))
 
-xbmcgui.Dialog.yesno                 = Dialog_yesno
-xbmcgui.Dialog.ok                    = Dialog_ok
-xbmcgui.Dialog.textviewer            = Dialog_textviewer
-xbmcgui.Dialog.notification          = Dialog_notification
-xbmcgui.Dialog.input                 = Dialog_input
-xbmcgui.DialogProgress.create        = DialogProgress_create
-xbmcgui.DialogProgress.iscanceled    = lambda self:False
-xbmcgui.Dialog.select                = Dialog_select
-xbmcgui.Dialog.browseSingle          = Dialog_browseSingle
+xbmcgui.Dialog.yesno = Dialog_yesno
+xbmcgui.Dialog.ok = Dialog_ok
+xbmcgui.Dialog.textviewer = Dialog_textviewer
+xbmcgui.Dialog.notification = Dialog_notification
+xbmcgui.Dialog.input = Dialog_input
+xbmcgui.DialogProgress.create = DialogProgress_create
+xbmcgui.DialogProgress.iscanceled = lambda self:False
+xbmcgui.Dialog.select = Dialog_select
+xbmcgui.Dialog.browseSingle = Dialog_browseSingle
 
-xbmcgui.ListItem.__init__            = ListItem_init
-xbmcgui.ListItem.setLabel            = ListItem_setLabel
-xbmcgui.ListItem.getLabel            = ListItem_getLabel
-xbmcgui.ListItem.setArt              = ListItem_setArt
-xbmcgui.ListItem.setInfo             = ListItem_setInfo
-xbmcgui.ListItem.addStreamInfo       = ListItem_addStreamInfo
+xbmcgui.ListItem.__init__ = ListItem_init
+xbmcgui.ListItem.setLabel = ListItem_setLabel
+xbmcgui.ListItem.getLabel = ListItem_getLabel
+xbmcgui.ListItem.setArt = ListItem_setArt
+xbmcgui.ListItem.setInfo = ListItem_setInfo
+xbmcgui.ListItem.addStreamInfo = ListItem_addStreamInfo
 xbmcgui.ListItem.addContextMenuItems = ListItem_addContextMenuItems
-xbmcgui.ListItem.setProperty         = ListItem_setProperty
-xbmcgui.ListItem.getProperty         = ListItem_getProperty
-xbmcgui.ListItem.setPath             = ListItem_setPath
-xbmcgui.ListItem.getPath             = ListItem_getPath
-xbmcgui.ListItem.__str__             = ListItem_str
-xbmcgui.ListItem.__repr__            = ListItem_repr
+xbmcgui.ListItem.setProperty = ListItem_setProperty
+xbmcgui.ListItem.getProperty = ListItem_getProperty
+xbmcgui.ListItem.setPath = ListItem_setPath
+xbmcgui.ListItem.getPath = ListItem_getPath
+xbmcgui.ListItem.__str__ = ListItem_str
+xbmcgui.ListItem.__repr__ = ListItem_repr
 
-xbmcgui.Window.__init__              = Window_init
-xbmcgui.Window.getProperty           = Window_getProperty
-xbmcgui.Window.setProperty           = Window_setProperty
-xbmcgui.Window.clearProperty         = Window_clearProperty
-xbmcgui.Window.save                  = Window_save
+xbmcgui.Window.__init__ = Window_init
+xbmcgui.Window.getProperty = Window_getProperty
+xbmcgui.Window.setProperty = Window_setProperty
+xbmcgui.Window.clearProperty = Window_clearProperty
+xbmcgui.Window.save = Window_save
 
 ## xbmcplugin ##
 def _init_data():
@@ -852,12 +859,12 @@ def setPluginCategory(handle, category):
     global DATA
     DATA['category'] = category
 
-xbmcplugin.addDirectoryItem  = addDirectoryItem
+xbmcplugin.addDirectoryItem = addDirectoryItem
 xbmcplugin.addDirectoryItems = addDirectoryItems
-xbmcplugin.endOfDirectory    = endOfDirectory
-xbmcplugin.setResolvedUrl    = setResolvedUrl
-xbmcplugin.addSortMethod     = addSortMethod
-xbmcplugin.setContent        = setContent
+xbmcplugin.endOfDirectory = endOfDirectory
+xbmcplugin.setResolvedUrl = setResolvedUrl
+xbmcplugin.addSortMethod = addSortMethod
+xbmcplugin.setContent = setContent
 xbmcplugin.setPluginCategory = setPluginCategory
 
 ## xbmcvfs ##
@@ -881,10 +888,10 @@ def listdir(path):
     else:
         return [], os.listdir(path)
 
-xbmcvfs.exists  = exists
-xbmcvfs.mkdir   = mkdir
-xbmcvfs.mkdirs  = mkdirs
-xbmcvfs.delete  = delete
+xbmcvfs.exists = exists
+xbmcvfs.mkdir = mkdir
+xbmcvfs.mkdirs = mkdirs
+xbmcvfs.delete = delete
 xbmcvfs.listdir = listdir
 
 if __name__ == "__main__":
