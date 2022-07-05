@@ -16,3 +16,8 @@ Example TvHeadend URL:
 ```
 pipe:///root/kodi.proxy/tvh.sh "plugin://plugin.video.kayo.sports/?_=play&_play=1&id=53208&play_type=2&start_from=0&_l=.pvr"
 ```
+
+If you want to use the Slyguy proxy for its various features (force quality, dns / proxy overwrites etc) then you need to run the proxy service with 
+```./proxy.py "plugin://script.module.slyguy" service```
+
+With the above running, the proxy.py will return urls that route via the above SlyGuy proxy.
