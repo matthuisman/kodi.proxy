@@ -30,6 +30,7 @@ class MainHandler(BaseHTTPRequestHandler):
         proxy._print = _print
 
         if url == 'playlist.m3u8':
+            #TODO: Go via IPTV Merge
             with open(os.path.join(proxy.addons_dir, ADDON_ID, '.iptv_merge')) as f:
                 data = json.loads(f.read())
 
@@ -50,6 +51,7 @@ class MainHandler(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(data)
         elif url == 'epg.xml':
+            #TODO: Go via IPTV Merge
             pass
         elif '://' in url:
             try:
