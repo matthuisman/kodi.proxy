@@ -71,7 +71,7 @@ class MainHandler(BaseHTTPRequestHandler):
             self.send_response(404)
 
 def run(port=80):
-    server_address = ('127.0.0.1', port)
+    server_address = ('', port)
     httpd = ThreadingHTTPServer(server_address, MainHandler)
     httpd.serve_forever()
 
