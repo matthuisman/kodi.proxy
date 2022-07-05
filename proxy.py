@@ -504,7 +504,7 @@ def Addon_init(self, id=None):
 
     self._settings_defaults = {
         'live_play_type': '1', #From live
-        'default_quality': '1', #Best
+        'default_quality': '1', #Best (requires proxy to be running)
         'persist_cache': 'false',
         'use_ia_hls_live': 'false',
         'use_ia_hls_vod': 'false',
