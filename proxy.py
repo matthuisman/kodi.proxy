@@ -12,10 +12,14 @@ import configparser
 import threading
 from collections import defaultdict
 from urllib.parse import urlsplit, unquote_plus, quote_plus, parse_qsl
+from urllib3.exceptions import InsecureRequestWarning
 
 import polib
 import requests
 import xbmc, xbmcaddon, xbmcgui, xbmcplugin, xbmcvfs
+
+# Suppress only the single warning from urllib3 needed.
+requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
 
 kodi_home = os.path.dirname(os.path.realpath(__file__))
 cmd = os.path.basename(__file__)
@@ -30,7 +34,7 @@ SETTINGS = {
     'userdata': kodi_home,
     'proxy_type': SHELL,
     'interactive': None,
-    'repo_url': 'https://k.slyguy.xyz/.repo',
+    'repo_url': 'https://slyguy.uk/.repo',
     'debug': 0,
 }
 
@@ -55,6 +59,9 @@ if not os.path.exists(addons_dir):
 
 if not os.path.exists(addons_data):
     os.makedirs(addons_data)
+
+session = requests.Session()
+session.verify = False
 
 class ProxyException(Exception):
     pass
@@ -83,7 +90,7 @@ def get_argv(position, default=None):
 def get_addons():
     addons = {}
     url = SETTINGS['repo_url'] + '/addons.xml'
-    r = requests.get(url)
+    r = session.get(url)
 
     tree = ET.fromstring(r.content)
     for elem in tree.findall('addon'):
@@ -99,7 +106,7 @@ def install(addon_id):
     if os.path.exists(local_filename):
         os.remove(local_filename)
 
-    r = requests.get(url, stream=True)
+    r = session.get(url, stream=True)
     with open(local_filename, 'wb') as f:
         shutil.copyfileobj(r.raw, f)
 
@@ -508,6 +515,7 @@ def Addon_init(self, id=None):
         'persist_cache': 'false',
         'use_ia_hls_live': 'false',
         'use_ia_hls_vod': 'false',
+        'verify_ssl': 'false',
         '_proxy_path': '', #start with: proxy.py "plugin://script.module.slyguy" service
     }
 
@@ -792,6 +800,10 @@ def endOfDirectory(handle, succeeded=True, updateListing=False, cacheToDisc=True
 
 def setResolvedUrl(handle, succeeded, listitem):
     log("Resolved: {0}".format(listitem))
+
+    ia_addon = listitem.getProperty('inputstream')
+    if ia_addon:
+        raise Exception('This stream requires "{}" add-on for playback. Inpustream addons do not work outside of Kodi'.format(ia_addon))
 
     if SETTINGS['proxy_type'] == TVHEADEND:
         output_tvh(listitem)
