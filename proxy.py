@@ -494,7 +494,7 @@ def Addon_init(self, id=None):
         'name': id,
         'path': os.path.join(addons_dir, id),
         'profile': os.path.join(addons_data, id),
-        'version': '2.0.0',
+        'version': '100.0.0',
         'fanart': 'fanart.jpg',
         'icon': 'icon.png',
     }
