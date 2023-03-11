@@ -6,10 +6,9 @@ cd kodi.proxy
 pip install virtualenv
 virtualenv --python=python3 .env
 source .env/bin/activate
-pip install -r requirements.txt
 chmod +x proxy.py
 chmod +x tvh.sh
-./proxy.py
+python3 proxy.py
 ```
 
 Example TvHeadend URL:

@@ -11,19 +11,17 @@ import re
 import zipfile
 import configparser
 import threading
+import ssl
+import urllib.request
 from collections import defaultdict
 from urllib.parse import urlsplit, unquote_plus, quote_plus, parse_qsl
-from urllib3.exceptions import InsecureRequestWarning
-
-import polib
-import requests
-import xbmc, xbmcaddon, xbmcgui, xbmcplugin, xbmcvfs
-
-# Suppress only the single warning from urllib3 needed.
-requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
 
 kodi_home = os.path.dirname(os.path.realpath(__file__))
 cmd = os.path.basename(__file__)
+sys.path.append(os.path.join(kodi_home, 'lib'))
+
+import polib
+import xbmc, xbmcaddon, xbmcgui, xbmcplugin, xbmcvfs
 
 TVHEADEND = 'TVH'
 SHELL = 'SHELL'
@@ -61,8 +59,9 @@ if not os.path.exists(addons_dir):
 if not os.path.exists(addons_data):
     os.makedirs(addons_data)
 
-session = requests.Session()
-session.verify = False
+ctx = ssl.create_default_context()
+ctx.check_hostname = False
+ctx.verify_mode = ssl.CERT_NONE
 
 class ProxyException(Exception):
     pass
@@ -91,9 +90,10 @@ def get_argv(position, default=None):
 def get_addons():
     addons = {}
     url = SETTINGS['repo_url'] + '/addons.xml'
-    r = session.get(url)
+    with urllib.request.urlopen(url, context=ctx) as f:
+        content = f.read()
 
-    tree = ET.fromstring(r.content)
+    tree = ET.fromstring(content)
     for elem in tree.findall('addon'):
         addons[elem.attrib['id']] = [elem.attrib['version'], elem.attrib['name']]
 
@@ -107,9 +107,7 @@ def install(addon_id):
     if os.path.exists(local_filename):
         os.remove(local_filename)
 
-    r = session.get(url, stream=True)
-    with open(local_filename, 'wb') as f:
-        shutil.copyfileobj(r.raw, f)
+    urllib.request.urlretrieve(url, local_filename)
 
     if os.path.exists(addon_path):
         shutil.move(addon_path, addon_path+".bu")
