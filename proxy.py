@@ -800,9 +800,9 @@ def endOfDirectory(handle, succeeded=True, updateListing=False, cacheToDisc=True
 def setResolvedUrl(handle, succeeded, listitem):
     log("Resolved: {0}".format(listitem))
 
-    ia_addon = listitem.getProperty('inputstream')
-    if ia_addon:
-        raise Exception('This stream requires "{}" add-on for playback. Inpustream addons do not work outside of Kodi'.format(ia_addon))
+    license_type = listitem.getProperty('inputstream.license_type')
+    if license_type:
+        raise Exception('This stream requires "{}" for playback. Encryption does not work outside of Kodi'.format(ia_addon))
 
     if SETTINGS['proxy_type'] == TVHEADEND:
         output_tvh(listitem)
