@@ -6,6 +6,7 @@ import time
 import json
 import shutil
 import subprocess
+import platform
 import xml.etree.ElementTree as ET
 import re
 import zipfile
@@ -800,10 +801,6 @@ def endOfDirectory(handle, succeeded=True, updateListing=False, cacheToDisc=True
 def setResolvedUrl(handle, succeeded, listitem):
     log("Resolved: {0}".format(listitem))
 
-    license_type = listitem.getProperty('inputstream.adaptive.license_type')
-    if license_type:
-        raise Exception('This stream requires "{}" for playback. Encryption does not work outside of Kodi'.format(license_type))
-
     if SETTINGS['proxy_type'] == TVHEADEND:
         output_tvh(listitem)
     elif SETTINGS['proxy_type'] == HTTP:
@@ -870,6 +867,10 @@ def setPluginCategory(handle, category):
     global DATA
     DATA['category'] = category
 
+def platform_system():
+    return 'kodi.proxy'
+
+platform.system = platform_system
 xbmcplugin.addDirectoryItem = addDirectoryItem
 xbmcplugin.addDirectoryItems = addDirectoryItems
 xbmcplugin.endOfDirectory = endOfDirectory
