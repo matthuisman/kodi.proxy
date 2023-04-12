@@ -1,5 +1,8 @@
 # kodi.proxy
 
+A basic Kodi "emulator" to allow non-kodi programs to obtain playable urls from the various Slyguy addons.
+Commonly used with TvHeadend
+
 ```
 git clone https://github.com/matthuisman/kodi.proxy
 cd kodi.proxy
