@@ -10,7 +10,6 @@ RUN cd /usr/share \
     && cd kodi.proxy \
     && echo "userdata=/config/kodi.proxy" >> config.ini \
     && virtualenv --python=python3 .env \
-    && .env/bin/pip install -r requirements.txt \
     && chmod 555 proxy tv_grab_iptv_merge iptv_merge.m3u8.sh tvh.sh \
     && ln -s /usr/share/kodi.proxy/tv_grab_iptv_merge /usr/bin/tv_grab_iptv_merge
 
