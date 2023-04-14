@@ -342,7 +342,7 @@ def run(url=None, module='default'):
     _opath = sys.path[:]
     _ocwd = os.getcwd()
 
-    load_dependencies(addon_id)
+    load_dependencies(addon_id, install_missing=True)
     sys.path.insert(0, addon_path)
     os.chdir(addon_path)
 
