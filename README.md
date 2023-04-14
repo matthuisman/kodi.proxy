@@ -16,7 +16,7 @@ python3 proxy.py
 
 Example TvHeadend URL:
 ```
-pipe:///root/kodi.proxy/tvh.sh "plugin://plugin.video.kayo.sports/?_=play&_play=1&id=53208&play_type=2&start_from=0&_l=.pvr"
+pipe:///root/kodi.proxy/tvh.sh "plugin://plugin.video.tester/?_=play_video&_play=1&index=0"
 ```
 
 If you want to use the Slyguy proxy for its various features (force quality, dns / proxy overwrites etc) then you need to run the proxy service with 
