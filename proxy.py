@@ -832,27 +832,28 @@ def output_tvh(listitem):
     path = listitem.getPath()
     name = listitem.getLabel().strip()
 
+    def escape(value):
+        return value.replace("'", r"\'")
+
     if '|' in path:
         url, headers = path.split('|')
-
         _headers = parse_qsl(headers)
-
-        headers = "-headers '"
+        headers = " -headers '"
         for pair in _headers:
-            headers += "{key}: {value}\r\n".format(key=pair[0], value=pair[1])
+            headers += "{key}: {value}\r\n".format(key=escape(pair[0]), value=escape(pair[1]))
 
-        headers += "' "
+        headers += "'"
     else:
         url, headers = path, ''
 
     seek = listitem.getProperty('ResumeTime')
     if seek:
-        seek = '-ss {}'.format(seek)
+        seek = ' -ss {}'.format(seek)
 
     if name:
-        name = "-metadata service_name='{}'".format(name)
+        name = " -metadata service_name='{}'".format(escape(name))
 
-    print("-loglevel fatal -probesize 10M -analyzeduration 0 -fpsprobesize 0 {headers} {seek} -i '{url}' {name}".format(headers=headers, seek=seek, url=url, name=name))
+    print("-loglevel fatal -probesize 10M -analyzeduration 0 -fpsprobesize 0{headers}{seek} -i '{url}'{name}".format(headers=headers, seek=seek, url=url, name=name))
     sys.exit(200)
 
 def addSortMethod(handle, sortMethod, label2Mask=""):
