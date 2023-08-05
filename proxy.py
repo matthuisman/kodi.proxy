@@ -851,7 +851,7 @@ def output_tvh(listitem):
         seek = ' -ss {}'.format(seek)
 
     if name:
-        name = " -metadata service_name='{}'".format(escape(name))
+        name = " -metadata service_name=\"{}\"".format(escape(name))
 
     print("-loglevel fatal -probesize 10M -analyzeduration 0 -fpsprobesize 0{headers}{seek} -i '{url}'{name}".format(headers=headers, seek=seek, url=url, name=name))
     sys.exit(200)
