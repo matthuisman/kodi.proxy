@@ -833,16 +833,15 @@ def output_tvh(listitem):
     name = listitem.getLabel().strip()
 
     def escape(value):
-        return value.replace("'", r"\'")
+        return value.replace('"', r'\"')
 
     if '|' in path:
         url, headers = path.split('|')
         _headers = parse_qsl(headers)
-        headers = " -headers '"
+        headers = ' -headers "'
         for pair in _headers:
-            headers += "{key}: {value}\r\n".format(key=escape(pair[0]), value=escape(pair[1]))
-
-        headers += "'"
+            headers += '{key}: {value}\r\n'.format(key=escape(pair[0]), value=escape(pair[1]))
+        headers += '"'
     else:
         url, headers = path, ''
 
@@ -851,9 +850,9 @@ def output_tvh(listitem):
         seek = ' -ss {}'.format(seek)
 
     if name:
-        name = " -metadata service_name='{}'".format(escape(name))
+        name = ' -metadata service_name="{}"'.format(escape(name))
 
-    print("-loglevel fatal -probesize 10M -analyzeduration 0 -fpsprobesize 0{headers}{seek} -i '{url}'{name}".format(headers=headers, seek=seek, url=url, name=name))
+    print('-loglevel fatal -probesize 10M -analyzeduration 0 -fpsprobesize 0{headers}{seek} -i "{url}"{name}'.format(headers=headers, seek=seek, url=url, name=name))
     sys.exit(200)
 
 def addSortMethod(handle, sortMethod, label2Mask=""):
