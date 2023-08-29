@@ -30,9 +30,6 @@ HTTP = 'HTTP'
 TV_GRAB = 'TV_GRAB'
 KODI = 'KODI'
 
-BEGIN_TOKEN='HP_DATA_BEGIN_TOKEN'
-END_TOKEN='HP_DATA_END_TOKEN'
-
 SETTINGS = {
     'userdata': kodi_home,
     'proxy_type': SHELL,
@@ -357,7 +354,7 @@ def run(url=None, module='default', need_quote=False):
     os.chdir(addon_path)
 
     log("Calling {} {} {}".format(addon_id, module, sys.argv))
-    log("Calling file_path {}".format(file_path))
+
     start = time.time()
     exec(open(file_path, encoding="utf-8").read(), dict(__file__=file_path))
     print("**** time: {0:.3f} s *****\n".format(time.time() - start))
@@ -522,7 +519,7 @@ def Addon_init(self, id=None):
     self._settings_defaults = {
         'live_play_type': '1', #From live
         'default_quality': '1', #Best (requires proxy to be running)
-        'persist_cache': 'true',
+        'persist_cache': 'false',
         'use_ia_hls_live': 'false',
         'use_ia_hls_vod': 'false',
         'verify_ssl': 'false',
@@ -623,43 +620,35 @@ def _print(text):
 
 def Dialog_yesno(self, heading, line1, line2="", line3="", nolabel="No", yeslabel="Yes", autoclose=0):
     _print("{}\n{} {} {}\n0: {}\n1: {}".format(heading, line1, line2, line3, nolabel, yeslabel))
-    output_json_dump({"type": "dialogYesno", "heading": heading ,"line1": line1, "line2": line2, "line3": line3, "nolabel": nolabel, "yeslabel": yeslabel})
     return int(get_input('Select: ', '0').strip()) == 1
 
 def Dialog_ok(self, heading, line1, line2="", line3=""):
-    output_json_dump({"type": "dialogOk", "heading": heading ,"line1": line1, "line2": line2, "line3": line3})
-    _print('\n{}\n {} {} {} [OK]'.format(heading, line1, line2, line3))
+    get_input('\n{}\n {} {} {} [OK]'.format(heading, line1, line2, line3))
 
 def Dialog_textviewer(self, heading, message):
-    output_json_dump({"type": "dialogTextviewer", "heading": heading ,"message": message})
     get_input('\n{}\n {} [OK]'.format(heading, message))
 
 def Dialog_notification(self, heading, message, icon="", time=0, sound=True):
     _func_print('Notification', locals())
-    output_json_dump({"type": "dialogNotification", "heading": heading ,"message": message, "icon": icon, "time": time, "sound": sound})
 
-def Dialog_select(self, heading, listIn, autoclose=0, preselect=-1, useDetails=False):
+def Dialog_select(self, heading, list, autoclose=0, preselect=-1, useDetails=False):
     _print('-1: Cancel')
-    lst = [{"index": -1,  "label": "Cancel"}]
-    for idx, item in enumerate(listIn):
+
+    for idx, item in enumerate(list):
         try:
             label = item.getLabel()
-            lst.append({"index": idx,  "label": item.getLabel()})
         except:
             label = item
 
         _print('{}: {}'.format(idx, label))
 
-    output_json_dump({"type": "dialogSelect", "heading": heading ,"list": lst, "autoclose": autoclose, "preselect": preselect, "useDetails": useDetails})
     return int(get_input('{}: '.format(heading), preselect))
 
 def Dialog_input(self, heading, defaultt="", type=0, option=0, autoclose=0):
-    output_json_dump({"type": "dialogInput", "heading": heading ,"defaultt": defaultt, "typeIn": type, "option": option, "autoclose": autoclose})
     return get_input('{0} ({1}): '.format(heading, defaultt)).strip() or defaultt
 
 def DialogProgress_create(self, heading, line1="", line2="", line3=""):
     _print('{}\n{} {} {}'.format(heading, line1, line2, line3))
-    output_json_dump({"type": "dialogProgressCreate", "heading": heading ,"line1": line1, "line2": line2, "line3": line3})
 
 def Dialog_browseSingle(self, type, heading, shares, mask='', useThumbs=False, treatAsFolder=False, defaultt=''):
     return get_input('{0} ({1}): '.format(heading, defaultt)).strip() or defaultt
@@ -809,9 +798,6 @@ def endOfDirectory(handle, succeeded=True, updateListing=False, cacheToDisc=True
 
         _print("{}: {}".format(idx, label))
 
-    items_data = list(map(lambda item: {"url": item[0],  "label": item[1].getLabel()}, DATA["items"]))
-    output_json_dump({"type": "list", "category": DATA["category"], "content": DATA["content"], "items": items_data})
-
     index = int(get_input('\nSelect: ', -1))
     if index >= 0:
         selected = DATA['items'][index]
@@ -846,29 +832,8 @@ def output_shell(listitem):
     else:
         url, headers = path, ''
 
-    licensePath = listitem.getProperty("inputstream.adaptive.license_key")
-
-    if '|' in licensePath:
-        licSptit = licensePath.split('|')
-        licenseUrl = licSptit[0]
-        licenseHeaders = licSptit[1]
-    else:
-        licenseUrl, licenseHeaders, licenseData, licenseData1_ = licensePath, '', '', ''
-
-    _print('\nURL: {}'.format(url))
+    _print('URL: {}'.format(url))
     _print('Headers: {}'.format(headers))
-
-    _print('license URL: {}'.format(licenseUrl))
-    _print('license Headers: {}'.format(licenseHeaders))
-    _print('\n')
-
-    output_json_dump({"type": "play", "label": listitem.getLabel() ,"url": listitem.getPath(), "label": listitem.getLabel(), "property": listitem._data['property']})
-    os.system("{}/drm-play.sh '{}' '{}'".format(kodi_home, url, licenseUrl));
-
-
-def output_json_dump(item):
-     _print("\n{}\n{}\n{}\n".format(BEGIN_TOKEN, json.dumps(item), END_TOKEN))
-     sys.stdout.flush()
 
 def output_tvh(listitem):
     path = listitem.getPath()
