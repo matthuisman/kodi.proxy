@@ -41,6 +41,8 @@ SETTINGS = {
     'debug': 1,
 }
 
+menu_select = False
+
 config = configparser.RawConfigParser(defaults=SETTINGS)
 config.read(os.path.join(kodi_home, 'config.ini'))
 
@@ -466,7 +468,9 @@ def Montor_waitForAbort(self, timeout=0):
     try:
         for i in range(timeout):
             if ABORTED:
+                output_json_dump({"type": "waiting-aborted"})
                 break
+            output_json_dump({"type": "waiting"})
             time.sleep(1)
     except:
         ABORTED = True
@@ -623,7 +627,7 @@ def _print(text):
 
 def Dialog_yesno(self, heading, line1, line2="", line3="", nolabel="No", yeslabel="Yes", autoclose=0):
     _print("{}\n{} {} {}\n0: {}\n1: {}".format(heading, line1, line2, line3, nolabel, yeslabel))
-    output_json_dump({"type": "dialogYesno", "heading": heading ,"line1": line1, "line2": line2, "line3": line3, "nolabel": nolabel, "yeslabel": yeslabel})
+    output_json_dump({"type": "dialogYesNo", "heading": heading ,"line1": line1, "line2": line2, "line3": line3, "nolabel": nolabel, "yeslabel": yeslabel})
     return int(get_input('Select: ', '0').strip()) == 1
 
 def Dialog_ok(self, heading, line1, line2="", line3=""):
@@ -631,8 +635,8 @@ def Dialog_ok(self, heading, line1, line2="", line3=""):
     _print('\n{}\n {} {} {} [OK]'.format(heading, line1, line2, line3))
 
 def Dialog_textviewer(self, heading, message):
-    output_json_dump({"type": "dialogTextviewer", "heading": heading ,"message": message})
-    get_input('\n{}\n {} [OK]'.format(heading, message))
+    output_json_dump({"type": "dialogTextViewer", "heading": heading ,"message": message})
+    _print('\n{}\n {} [OK]'.format(heading, message))
 
 def Dialog_notification(self, heading, message, icon="", time=0, sound=True):
     _func_print('Notification', locals())
@@ -809,15 +813,21 @@ def endOfDirectory(handle, succeeded=True, updateListing=False, cacheToDisc=True
 
         _print("{}: {}".format(idx, label))
 
-    items_data = list(map(lambda item: {"url": item[0],  "label": item[1].getLabel()}, DATA["items"]))
+    #_print("DATA: {}".format(DATA));
+
+    items_data = list(map(lambda item: {"url": item[0],  "label": item[1].getLabel(), "info": item[1]._data.get('info', {}), "art": item[1]._data.get('art', {}) ,"property": item[1]._data.get('property', {}), "context": item[1]._data.get('context', [])}, DATA["items"]))
+    #items_data = list(map(lambda item: {"url": item[0],  "label": item[1].getLabel()}, DATA["items"]))
     output_json_dump({"type": "list", "category": DATA["category"], "content": DATA["content"], "items": items_data})
 
-    index = int(get_input('\nSelect: ', -1))
-    if index >= 0:
-        selected = DATA['items'][index]
-        url = selected[0]
-        DATA = _init_data()
-        next_path = url
+    if menu_select:
+        index = int(get_input('\nSelect: ', -1))
+        if index >= 0:
+            selected = DATA['items'][index]
+            url = selected[0]
+            DATA = _init_data()
+            next_path = url
+    else:
+        sys.exit(200)
 
 def setResolvedUrl(handle, succeeded, listitem):
     log("Resolved: {0}".format(listitem))
