@@ -16,6 +16,7 @@ import ssl
 import urllib.request
 from collections import defaultdict
 from urllib.parse import urlsplit, unquote_plus, quote_plus, parse_qsl
+import uuid
 
 kodi_home = os.path.dirname(os.path.realpath(__file__))
 cmd = os.path.basename(__file__)
@@ -620,14 +621,14 @@ def get_input(text, default=''):
         return default
 
 def _print(text):
-    print(text, file=sys.stderr)
+    print(text, file=sys.stdout)
 
     # if SETTINGS['interactive'] or SETTINGS['debug']:
     #     print(text)
 
 def Dialog_yesno(self, heading, line1, line2="", line3="", nolabel="No", yeslabel="Yes", autoclose=0):
     _print("{}\n{} {} {}\n0: {}\n1: {}".format(heading, line1, line2, line3, nolabel, yeslabel))
-    output_json_dump({"type": "dialogYesNo", "heading": heading ,"line1": line1, "line2": line2, "line3": line3, "nolabel": nolabel, "yeslabel": yeslabel})
+    output_json_dump({"type": "dialogYesNo", "heading": heading ,"line1": line1, "line2": line2, "line3": line3, "nolabel": nolabel, "yeslabel": yeslabel, "yesvalue": 1, "noValue": 0})
     return int(get_input('Select: ', '0').strip()) == 1
 
 def Dialog_ok(self, heading, line1, line2="", line3=""):
@@ -877,6 +878,8 @@ def output_shell(listitem):
 
 
 def output_json_dump(item):
+     if isinstance(item, dict):
+        item["uuid"] = str(uuid.uuid1())
      _print("\n{}\n{}\n{}\n".format(BEGIN_TOKEN, json.dumps(item), END_TOKEN))
      sys.stdout.flush()
 
