@@ -628,7 +628,7 @@ def _print(text):
 
 def Dialog_yesno(self, heading, line1, line2="", line3="", nolabel="No", yeslabel="Yes", autoclose=0):
     _print("{}\n{} {} {}\n0: {}\n1: {}".format(heading, line1, line2, line3, nolabel, yeslabel))
-    output_json_dump({"type": "dialogYesNo", "heading": heading ,"line1": line1, "line2": line2, "line3": line3, "nolabel": nolabel, "yeslabel": yeslabel, "yesvalue": 1, "noValue": 0})
+    output_json_dump({"type": "dialogYesNo", "heading": heading ,"line1": line1, "line2": line2, "line3": line3, "nolabel": nolabel, "yeslabel": yeslabel, "yesValue": 1, "noValue": 0})
     return int(get_input('Select: ', '0').strip()) == 1
 
 def Dialog_ok(self, heading, line1, line2="", line3=""):
