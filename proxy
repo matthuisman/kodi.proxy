@@ -3,4 +3,4 @@
 SCRIPT="$(realpath $0)"
 SCRIPT_PATH="$(dirname $SCRIPT)"
 
-$SCRIPT_PATH/.env/bin/python $SCRIPT_PATH/proxy_json.py $1
+$SCRIPT_PATH/.env/bin/python $SCRIPT_PATH/proxy_json.py $1 $2

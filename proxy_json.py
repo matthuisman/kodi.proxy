@@ -302,13 +302,17 @@ start_path = None
 last_path = None
 current_path = None
 next_path = None
+uuid_str = str(uuid.uuid1())
 
 def run(url=None, module='default', need_quote=False):
-    global last_path, current_path, start_path, next_path
+    global last_path, current_path, start_path, next_path, uuid_str
     log("Run {} {}".format(url, module))
     next_path = None
 
     url = url or get_argv(0, '')
+    if get_argv(2):
+        uuid_str = get_argv(2)
+
     split = urlsplit(url)
     addon_id = split.netloc or os.path.basename(os.getcwd())
 
@@ -347,6 +351,8 @@ def run(url=None, module='default', need_quote=False):
     current_path = url
 
     _print(current_path+'\n')
+
+    _print("UUID: "+uuid_str+'\n')
 
     url = '{}://{}{}'.format(split.scheme or 'plugin', addon_id, split.path or '/')
 
@@ -615,7 +621,10 @@ xbmcaddon.Addon.getAddonInfo = Addon_getAddonInfo
 
 def get_input(text, default=''):
     if SETTINGS['interactive']:
-        return input(text)
+        ret = input(text)
+        if ret == "EXIT!!!":
+            sys.exit(200)
+        return ret
     else:
         _print(text)
         return default
@@ -649,10 +658,9 @@ def Dialog_select(self, heading, listIn, autoclose=0, preselect=-1, useDetails=F
     for idx, item in enumerate(listIn):
         try:
             label = item.getLabel()
-            lst.append({"index": idx,  "label": item.getLabel()})
         except:
             label = item
-
+        lst.append({"index": idx,  "label": label})
         _print('{}: {}'.format(idx, label))
 
     output_json_dump({"type": "dialogSelect", "heading": heading ,"list": lst, "autoclose": autoclose, "preselect": preselect, "useDetails": useDetails})
@@ -806,19 +814,20 @@ def endOfDirectory(handle, succeeded=True, updateListing=False, cacheToDisc=True
     if last_path:
         DATA['items'].insert(0, [last_path, xbmcgui.ListItem(label='BACK')])
 
+    items_data = []
     FORMAT_TAGS = ['B', 'COLOR']
     for idx, item in enumerate(DATA['items']):
         label = item[1].getLabel()
         for tag in FORMAT_TAGS:
             label = re.sub('\[/?{}.*?]'.format(tag), '', label)
-
+        items_data.append({"url": item[0],  "label": label, "info": item[1]._data.get('info', {}), "art": item[1]._data.get('art', {}) ,"property": item[1]._data.get('property', {}), "context": item[1]._data.get('context', [])})
         _print("{}: {}".format(idx, label))
 
     #_print("DATA: {}".format(DATA));
 
-    items_data = list(map(lambda item: {"url": item[0],  "label": item[1].getLabel(), "info": item[1]._data.get('info', {}), "art": item[1]._data.get('art', {}) ,"property": item[1]._data.get('property', {}), "context": item[1]._data.get('context', [])}, DATA["items"]))
+    #items_data = list(map(lambda item: {"url": item[0],  "label": item[1].getLabel(), "info": item[1]._data.get('info', {}), "art": item[1]._data.get('art', {}) ,"property": item[1]._data.get('property', {}), "context": item[1]._data.get('context', [])}, DATA["items"]))
     #items_data = list(map(lambda item: {"url": item[0],  "label": item[1].getLabel()}, DATA["items"]))
-    output_json_dump({"type": "list", "category": DATA["category"], "content": DATA["content"], "items": items_data})
+    output_json_dump({"type": "list", "category": DATA["category"], "content": DATA["content"], "items": items_data, "url": current_path})
 
     if menu_select:
         index = int(get_input('\nSelect: ', -1))
@@ -879,7 +888,7 @@ def output_shell(listitem):
 
 def output_json_dump(item):
      if isinstance(item, dict):
-        item["uuid"] = str(uuid.uuid1())
+        item["uuid"] = uuid_str
      _print("\n{}\n{}\n{}\n".format(BEGIN_TOKEN, json.dumps(item), END_TOKEN))
      sys.stdout.flush()
 
