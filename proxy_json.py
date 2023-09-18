@@ -872,8 +872,9 @@ def output_shell(listitem):
         licSptit = licensePath.split('|')
         licenseUrl = licSptit[0]
         licenseHeaders = licSptit[1]
+        licenseType = licSptit[2]
     else:
-        licenseUrl, licenseHeaders, licenseData, licenseData1_ = licensePath, '', '', ''
+        licenseUrl, licenseHeaders, licenseType, licenseData1_ = licensePath, '', '', ''
 
     _print('\nURL: {}'.format(url))
     _print('Headers: {}'.format(headers))
@@ -882,7 +883,8 @@ def output_shell(listitem):
     _print('license Headers: {}'.format(licenseHeaders))
     _print('\n')
 
-    output_json_dump({"type": "play", "label": listitem.getLabel() ,"url": listitem.getPath(), "label": listitem.getLabel(), "property": listitem._data['property']})
+    output_json_dump({"type": "play", "label": listitem.getLabel() ,"url": listitem.getPath(), "label": listitem.getLabel(), "property": listitem._data['property'],
+                      "urlClean": url, "headers": unquote_plus(headers), "licenseUrl": licenseUrl, "licenseHeaders": unquote_plus(licenseHeaders), "licenseType": licenseType})
     os.system("{}/drm-play.sh '{}' '{}'".format(kodi_home, url, licenseUrl));
 
 
@@ -891,6 +893,9 @@ def output_json_dump(item):
         item["uuid"] = uuid_str
      _print("\n{}\n{}\n{}\n".format(BEGIN_TOKEN, json.dumps(item), END_TOKEN))
      sys.stdout.flush()
+
+def output_json_reload():
+     output_json_dump({"type": "reload"})
 
 def output_tvh(listitem):
     path = listitem.getPath()
