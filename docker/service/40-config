@@ -1,0 +1,6 @@
+#!/usr/bin/with-contenv bash
+
+mkdir -p /config/kodi.proxy
+
+chown -R abc:abc /usr/share/kodi.proxy
+chown -R abc:abc /config/kodi.proxy
