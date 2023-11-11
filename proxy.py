@@ -14,6 +14,7 @@ import configparser
 import threading
 import ssl
 import urllib.request
+from gzip import GzipFile
 from collections import defaultdict
 from urllib.parse import urlsplit, unquote_plus, quote_plus, parse_qsl
 
@@ -34,7 +35,7 @@ SETTINGS = {
     'userdata': kodi_home,
     'proxy_type': SHELL,
     'interactive': None,
-    'repo_url': 'https://slyguy.uk/.repo',
+    'addons_url': 'https://slyguy.uk/.repo/addons.json.gz',
     'debug': 0,
 }
 
@@ -88,21 +89,19 @@ def get_argv(position, default=None):
     except IndexError:
         return default
 
+CACHE = {}
 def get_addons():
-    addons = {}
-    url = SETTINGS['repo_url'] + '/addons.xml'
-    with urllib.request.urlopen(url, context=ctx) as f:
-        content = f.read()
+    # TODO: add expiry
+    if 'addons' not in CACHE:
+        with urllib.request.urlopen(SETTINGS['addons_url'], context=ctx) as f:
+            CACHE['addons'] = json.loads(GzipFile(fileobj=f).read())
 
-    tree = ET.fromstring(content)
-    for elem in tree.findall('addon'):
-        addons[elem.attrib['id']] = [elem.attrib['version'], elem.attrib['name']]
-
-    return addons
+    return CACHE['addons']
 
 def install(addon_id):
     addon_path = os.path.join(addons_dir, addon_id)
-    url = SETTINGS['repo_url'] + '/{addon_id}/source.zip'.format(addon_id=addon_id)
+    addon = get_addons()[addon_id]
+    url = addon['src'] + '{}-{}.zip'.format(addon_id, addon['version'])
     local_filename = os.path.join(addons_dir, addon_id+'.zip')
 
     if os.path.exists(local_filename):
@@ -170,9 +169,9 @@ def menu(url='', module='default'):
 
             options = ['ALL']
 
-            for idx, addon_id in enumerate(sorted(addons, key=lambda x: addons[x][1].lower()), start=1):
+            for idx, addon_id in enumerate(sorted(addons, key=lambda x: addons[x]['name'].lower()), start=1):
                 addon = addons[addon_id]
-                label = addon[1]
+                label = '{name} ({version})'.format(**addon)
                 options.append(addon_id)
                 if addon_id in installed_addons:
                     label += ' [INSTALLED]'
@@ -182,7 +181,7 @@ def menu(url='', module='default'):
             addon_id = options[int(get_input('\nSelect: '))]
             return menu(url='install://{}'.format(addon_id))
 
-        if addon_id == 'ALL':
+        if addon_id == 'all':
             to_install = addons.keys()
         elif addon_id in installed_addons:
             raise ProxyException('{} already installed'.format(addon_id))
@@ -249,7 +248,7 @@ def menu(url='', module='default'):
             root = tree.getroot()
             version = root.attrib['version']
 
-            if version == addons[addon][0]:
+            if version == addons[addon]['version']:
                 _print('{} ({}): Upto date'.format(addon, version))
                 continue
 
