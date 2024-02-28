@@ -892,6 +892,9 @@ def mkdirs(path):
 def delete(file):
     return os.remove(file)
 
+def copy(src, dst):
+    return shutil.copy(src, dst)
+
 def listdir(path):
     if path.startswith('plugin://'):
         output = run_plugin(unquote_plus(path))
@@ -900,6 +903,7 @@ def listdir(path):
         return [], os.listdir(path)
 
 xbmcvfs.exists = exists
+xbmcvfs.copy = copy
 xbmcvfs.mkdir = mkdir
 xbmcvfs.mkdirs = mkdirs
 xbmcvfs.delete = delete
