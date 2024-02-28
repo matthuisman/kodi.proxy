@@ -505,6 +505,10 @@ def Addon_init(self, id=None):
         'icon': 'icon.png',
     }
 
+    # simulate pre-multi-instance
+    if id == 'pvr.iptvsimple':
+        self._info['version'] = '19.0.0'
+
     self._settings = {}
     self._strings  = {}
 
