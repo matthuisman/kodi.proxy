@@ -138,7 +138,7 @@ def _get_installed_addons():
     return [f for f in os.listdir(addons_dir) if os.path.exists(os.path.join(addons_dir, f, 'addon.xml'))]
 
 def menu(url='', module='default'):
-    cmds = ['install', 'uninstall', 'update', 'plugin', 'settings']
+    cmds = ['install', 'uninstall', 'update', 'plugin']
 
     installed_addons = _get_installed_addons()
 
@@ -254,37 +254,20 @@ def menu(url='', module='default'):
 
             install(addon)
 
-    elif cmd == 'settings':
-        if not addon_id:
-            for idx, addon in enumerate(installed_addons):
-                _print('{}: {}'.format(idx, addon))
-
-            addon_id = installed_addons[int(get_input('\nSelect: '))]
-            return menu(url='settings://{}'.format(addon_id))
-
-        key = None #need to parse from url
-        value = None #need to parse from url
-
-        addon = xbmcaddon.Addon(addon_id)
-
-        if key and value:
-            addon.setSetting(key, value)
-        elif key:
-            _print(addon.getSetting(key))
-        else:
-            addon.openSettings()
-
     elif cmd == 'plugin':
         if not addon_id:
-            for idx, addon in enumerate(installed_addons):
+            options = []
+            for addon in installed_addons:
                 addon_xml_path = os.path.join(addons_dir, addon, 'addon.xml')
                 with open(addon_xml_path) as f:
                     if 'xbmc.python.pluginsource' not in f.read():
                         continue
+                options.append(addon)
 
+            for idx, addon in enumerate(options):
                 _print('{}: {}'.format(idx, addon))
 
-            addon_id = installed_addons[int(get_input('\nSelect: '))]
+            addon_id = options[int(get_input('\nSelect: '))]
             return menu(url='plugin://{}'.format(addon_id))
 
         run(url, module)
@@ -535,9 +518,7 @@ def Addon_init(self, id=None):
         for key in root.attrib:
             self._info[key] = root.attrib[key]
 
-    if not os.path.exists(settings_path):
-        log("WARNING: Missing {}".format(settings_path))
-    else:
+    if os.path.exists(settings_path):
         tree = ET.parse(settings_path)
         for elem in tree.findall('*/setting'):
             if 'id' in elem.attrib:
@@ -549,7 +530,8 @@ def Addon_init(self, id=None):
         try:
             po = polib.pofile(po_path)
             for entry in po:
-                self._strings[int(entry.msgctxt.lstrip('#'))] = re.sub(r'\[.*?\]', '',entry.msgid)
+                index = int(entry.msgctxt.lstrip('#'))
+                self._strings[index] = entry.msgid
         except:
             log("WARNING: Failed to parse PO File: {}".format(po_path))
 
