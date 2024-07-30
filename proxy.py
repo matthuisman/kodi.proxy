@@ -772,7 +772,7 @@ def endOfDirectory(handle, succeeded=True, updateListing=False, cacheToDisc=True
     for idx, item in enumerate(DATA['items']):
         label = item[1].getLabel()
         for tag in FORMAT_TAGS:
-            label = re.sub('\[/?{}.*?]'.format(tag), '', label)
+            label = re.sub(r'\[/?{}.*?]'.format(tag), '', label)
 
         _print("{}: {}".format(idx, label))
 
