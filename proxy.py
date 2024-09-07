@@ -873,7 +873,7 @@ def mkdir(path):
     return os.mkdir(path)
 
 def mkdirs(path):
-    return os.makedirs(path)
+    return os.makedirs(path, exist_ok=True)
 
 def delete(file):
     return os.remove(file)
