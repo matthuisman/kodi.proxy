@@ -30,6 +30,7 @@ SHELL = 'SHELL'
 HTTP = 'HTTP'
 TV_GRAB = 'TV_GRAB'
 KODI = 'KODI'
+JSON = 'JSON'
 
 SETTINGS = {
     'userdata': kodi_home,
@@ -37,6 +38,7 @@ SETTINGS = {
     'interactive': None,
     'addons_url': 'https://slyguy.uk/.repo/addons.json.gz',
     'debug': 0,
+    'wv_platform': 'desktop',
 }
 
 config = configparser.RawConfigParser(defaults=SETTINGS)
@@ -51,6 +53,12 @@ tmp_dir = os.path.join(SETTINGS['userdata'], 'tmp')
 
 if SETTINGS['interactive'] == None:
     SETTINGS['interactive'] = SETTINGS['proxy_type'] == SHELL
+
+if SETTINGS['proxy_type'] == JSON:
+    try:
+        sys.stdout.reconfigure(encoding='utf-8')
+    except AttributeError:
+        pass
 
 if not os.path.exists(tmp_dir):
     os.makedirs(tmp_dir)
@@ -136,6 +144,41 @@ def install(addon_id):
 
 def _get_installed_addons():
     return [f for f in os.listdir(addons_dir) if os.path.exists(os.path.join(addons_dir, f, 'addon.xml'))]
+
+def list_addons(plugins_only=True):
+    rows = []
+    for addon_id in sorted(_get_installed_addons()):
+        addon_path = os.path.join(addons_dir, addon_id)
+        try:
+            root = ET.parse(os.path.join(addon_path, 'addon.xml')).getroot()
+        except Exception:
+            continue
+
+        points = [e.attrib.get('point', '') for e in root.findall('extension')]
+        is_plugin = 'xbmc.python.pluginsource' in points
+        if plugins_only and not is_plugin:
+            continue
+
+        # script.module.* are shared libraries (e.g. SlyGuy Common), not services
+        if plugins_only and addon_id.startswith('script.module.'):
+            continue
+
+        icon = ''
+        for elem in root.findall("./extension[@point='xbmc.addon.metadata']/assets/icon"):
+            icon = elem.text or ''
+        icon_path = os.path.join(addon_path, icon) if icon else os.path.join(addon_path, 'icon.png')
+
+        rows.append({
+            'id': addon_id,
+            'name': root.attrib.get('name', addon_id),
+            'version': root.attrib.get('version', ''),
+            'is_plugin': is_plugin,
+            'url': 'plugin://{}'.format(addon_id),
+            'icon': icon_path if os.path.exists(icon_path) else '',
+            'path': addon_path,
+        })
+
+    return rows
 
 def menu(url='', module='default'):
     cmds = ['install', 'uninstall', 'update', 'plugin']
@@ -332,7 +375,8 @@ def run(url=None, module='default'):
 
     start = time.time()
     exec(open(file_path, encoding="utf-8").read(), dict(__file__=file_path))
-    print("**** time: {0:.3f} s *****\n".format(time.time() - start))
+    if SETTINGS['proxy_type'] != JSON:
+        print("**** time: {0:.3f} s *****\n".format(time.time() - start))
 
     sys.path = _opath
     os.chdir(_ocwd)
@@ -422,6 +466,11 @@ def translatePath(path):
 
 def getCondVisibility(condition):
     log("Get visibility condition: {}".format(condition))
+    if not condition:
+        return False
+    plat = (SETTINGS.get('wv_platform') or 'desktop').lower()
+    if 'system.platform.android' in condition.lower():
+        return plat.startswith('android')
     return False
 
 def getLanguage(format):
@@ -625,6 +674,9 @@ def Dialog_select(self, heading, list, autoclose=0, preselect=-1, useDetails=Fal
 def Dialog_input(self, heading, defaultt="", type=0, option=0, autoclose=0):
     return get_input('{0} ({1}): '.format(heading, defaultt)).strip() or defaultt
 
+def Dialog_numeric(self, type, heading, defaultt="", bHiddenInput=False):
+    return get_input('{0} ({1}): '.format(heading, defaultt)).strip() or defaultt
+
 def DialogProgress_create(self, heading, line1="", line2="", line3=""):
     _print('{}\n{} {} {}'.format(heading, line1, line2, line3))
 
@@ -703,6 +755,7 @@ xbmcgui.Dialog.ok = Dialog_ok
 xbmcgui.Dialog.textviewer = Dialog_textviewer
 xbmcgui.Dialog.notification = Dialog_notification
 xbmcgui.Dialog.input = Dialog_input
+xbmcgui.Dialog.numeric = Dialog_numeric
 xbmcgui.DialogProgress.create = DialogProgress_create
 xbmcgui.DialogProgress.iscanceled = lambda self:False
 xbmcgui.Dialog.select = Dialog_select
@@ -754,6 +807,30 @@ def endOfDirectory(handle, succeeded=True, updateListing=False, cacheToDisc=True
 
         return
 
+    elif SETTINGS['proxy_type'] == JSON:
+        rows = []
+        for item in DATA['items']:
+            url = item[0]
+            li = item[1]
+            is_folder = item[2] if len(item) > 2 else False
+
+            label = li.getLabel() or ''
+            for tag in ('B', 'COLOR'):
+                label = re.sub(r'\[/?{}.*?]'.format(tag), '', label)
+
+            data = getattr(li, '_data', {})
+            rows.append({
+                'label': label.strip(),
+                'url': url,
+                'is_folder': bool(is_folder),
+                'is_playable': '_play=1' in url,
+                'art': dict(data.get('art', {})),
+                'info': {k: dict(v) for k, v in dict(data.get('info', {})).items()},
+            })
+
+        print(json.dumps(rows, ensure_ascii=False))
+        return
+
     elif SETTINGS['proxy_type'] == TV_GRAB:
         for item in DATA['items']:
             print(unquote_plus(item[0]))
@@ -792,8 +869,28 @@ def setResolvedUrl(handle, succeeded, listitem):
         output_http(listitem)
     elif SETTINGS['proxy_type'] == TV_GRAB:
         output_tv_grab(listitem)
+    elif SETTINGS['proxy_type'] == JSON:
+        output_json(listitem)
     else:
         output_shell(listitem)
+
+def output_json(listitem):
+    path = listitem.getPath()
+
+    if '|' in path:
+        url, headers = path.split('|', 1)
+        headers = dict(parse_qsl(headers))
+    else:
+        url, headers = path, {}
+
+    data = getattr(listitem, '_data', {})
+    print(json.dumps({
+        'url': url,
+        'headers': headers,
+        'label': listitem.getLabel().strip(),
+        'properties': dict(data.get('property', {})),
+    }, ensure_ascii=False))
+    sys.exit(200)
 
 def output_tv_grab(listitem):
     print(listitem.getPath())
@@ -896,7 +993,16 @@ xbmcvfs.delete = delete
 xbmcvfs.listdir = listdir
 
 if __name__ == "__main__":
-    try:
-        menu(get_argv(1, ''), get_argv(2, 'default'))
-    except ProxyException as e:
-        print(str(e))
+    if get_argv(1, '') == 'addons':
+        # list installed addons as JSON. Pass "all" to include modules/repos.
+        try:
+            sys.stdout.reconfigure(encoding='utf-8')
+        except AttributeError:
+            pass
+        plugins_only = get_argv(2, '') != 'all'
+        print(json.dumps(list_addons(plugins_only=plugins_only), ensure_ascii=False, indent=2))
+    else:
+        try:
+            menu(get_argv(1, ''), get_argv(2, 'default'))
+        except ProxyException as e:
+            print(str(e))
